@@ -188,11 +188,6 @@ local function get_font_name(font_path)
 				print("Font not found")
 			end
 		end
-		if handle then
-			local result = handle:read("*a")
-			handle:close()
-			print(result) -- Prints font names
-		end
 	elseif os_type == "unix" then
 		local command = string.format('fc-scan --format %%{family} "%s"', font_path)
 		local handle = io.popen(command)
@@ -200,8 +195,13 @@ local function get_font_name(font_path)
 			local result = handle:read("*a")
 			handle:close()
 			if result ~= "" then
-				-- Match the first result of the response
-				return (result:match("([^,]+)"))
+				if result:find(",") or result:find(" ") then
+					-- If there's a comma or a space, just get everything before it
+					return result:match("([^,]+)"):match("^%s*(.-)%s*$")
+				else
+					-- No comma found, extract the first proper noun
+					return result:match("([A-Z][^A-Z]*)")
+				end
 			else
 				print("Font not found")
 			end
