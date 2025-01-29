@@ -17,11 +17,19 @@ if not ok then
 	os.exit(1)
 end
 
+local os_type
+
+if package.config:sub(1, 1) == "\\" then
+	os_type = "win"
+else
+	os_type = "unix"
+end
+
 -- Default settings
 local VERSION = "1.1.0"
 local DEFAULT_SIZE = "1000x1000"
-local DEFAULT_FONT_SIZE = 38
-local DEFAULT_BG_COLOR = "#500000"
+local DEFAULT_FONT_SIZE = 23
+local DEFAULT_BG_COLOR = "#FFFFFF"
 local DEFAULT_FG_COLOR = "#000000"
 local DEFAULT_BG_ALPHA = 1.0
 local DEFAULT_FG_ALPHA = 1.0
@@ -164,6 +172,44 @@ local function create_srgb_background(width, height, r, g, b, a)
 	return bg
 end
 
+local function get_font_name(font_path)
+	if os_type == "win" then
+		local command = string.format(
+			'powershell -Command "[System.Drawing.FontFamily]::Families | Where-Object { $_.GetName(0) -eq ("%s") } | Select-Object -ExpandProperty Name"',
+			font_path
+		)
+		local handle = io.popen(command)
+		if handle then
+			local result = handle:read("*a")
+			handle:close()
+			if result ~= "" then
+				return result
+			else
+				print("Font not found")
+			end
+		end
+		if handle then
+			local result = handle:read("*a")
+			handle:close()
+			print(result) -- Prints font names
+		end
+	elseif os_type == "unix" then
+		local command = string.format('fc-scan --format %%{family} "%s"', font_path)
+		local handle = io.popen(command)
+		if handle then
+			local result = handle:read("*a")
+			handle:close()
+			if result ~= "" then
+				-- Match the first result of the response
+				return (result:match("([^,]+)"))
+			else
+				print("Font not found")
+			end
+		end
+	end
+	return "NA"
+end
+
 local function generate_preview(config)
 	local width, height = config.size:match("^(%d+)x(%d+)$")
 	if not width or not height then
@@ -183,9 +229,10 @@ local function generate_preview(config)
 
 	-- Generate text
 	local font_path = os.getenv("PWD") .. "/" .. config.input
+	local font_family = get_font_name(font_path)
 	local ok, text = pcall(function()
 		local text_img = vips.Image.text(config.preview_text, {
-			font = "Drafting* Mono 20",
+			font = font_family .. " " .. config.font_size, -- Controls size based on fontconfig
 			fontfile = font_path,
 			width = width,
 			height = height,
@@ -212,13 +259,14 @@ local function generate_preview(config)
 		error("Failed to generate text: " .. tostring(text))
 	end
 
-	text:write_to_file("plese.png")
-
 	-- Ensure both images have the same format before compositing
 	bg = bg:cast(text:format())
 
+	local x = math.max(0, math.floor((bg:width() - text:width()) / 2))
+	local y = math.max(0, math.floor((bg:height() - text:height()) / 2))
+
 	-- Composite and save
-	local output = bg:composite2(text, "over")
+	local output = bg:composite2(text, "over", { x = x, y = x })
 	output:write_to_file(config.output)
 	print(("Generated preview: %s"):format(config.output))
 end
