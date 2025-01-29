@@ -210,6 +210,145 @@ local function get_font_name(font_path)
 	return "NA"
 end
 
+local function contains_latin_language_code(codes)
+	-- Use hash table for O(1) lookups
+	local latin_languages = {
+		aa = true,
+		af = true,
+		ay = true,
+		bi = true,
+		br = true,
+		bs = true,
+		ca = true,
+		ch = true,
+		co = true,
+		cs = true,
+		cy = true,
+		da = true,
+		de = true,
+		en = true,
+		eo = true,
+		es = true,
+		et = true,
+		eu = true,
+		fi = true,
+		fj = true,
+		fo = true,
+		fr = true,
+		fur = true,
+		fy = true,
+		gd = true,
+		gl = true,
+		gv = true,
+		ho = true,
+		hr = true,
+		hu = true,
+		ia = true,
+		id = true,
+		ie = true,
+		io = true,
+		is = true,
+		it = true,
+		ki = true,
+		kl = true,
+		la = true,
+		lb = true,
+		lt = true,
+		lv = true,
+		mg = true,
+		mh = true,
+		mt = true,
+		nb = true,
+		nds = true,
+		nl = true,
+		nn = true,
+		no = true,
+		nr = true,
+		nso = true,
+		ny = true,
+		oc = true,
+		om = true,
+		pl = true,
+		pt = true,
+		rm = true,
+		ro = true,
+		se = true,
+		sk = true,
+		sl = true,
+		sma = true,
+		smj = true,
+		smn = true,
+		so = true,
+		sq = true,
+		ss = true,
+		st = true,
+		sv = true,
+		sw = true,
+		tk = true,
+		tl = true,
+		tn = true,
+		tr = true,
+		ts = true,
+		uz = true,
+		vo = true,
+		vot = true,
+		wa = true,
+		wen = true,
+		wo = true,
+		xh = true,
+		yap = true,
+		zu = true,
+		an = true,
+		crh = true,
+		csb = true,
+		fil = true,
+		hsb = true,
+		ht = true,
+		jv = true,
+		kj = true,
+		["ku-tr"] = true,
+		kwm = true,
+		lg = true,
+		li = true,
+		ms = true,
+		na = true,
+		ng = true,
+		["pap-an"] = true,
+		["pap-aw"] = true,
+		rn = true,
+		rw = true,
+		sc = true,
+		sg = true,
+		sn = true,
+		su = true,
+		ty = true,
+		za = true,
+		agr = true,
+		ayc = true,
+		bem = true,
+		dsb = true,
+		lij = true,
+		mfe = true,
+		mjw = true,
+		nhn = true,
+		niu = true,
+		sgs = true,
+		szl = true,
+		tpi = true,
+		unm = true,
+		wae = true,
+		yuw = true,
+	}
+
+	-- Directly iterate through codes without building a temporary list
+	for code in codes:gmatch("([^|]+)") do
+		if latin_languages[code] then
+			return true
+		end
+	end
+	return false
+end
+
 local function generate_preview(config)
 	local width, height = config.size:match("^(%d+)x(%d+)$")
 	if not width or not height then
@@ -257,6 +396,18 @@ local function generate_preview(config)
 
 	if not ok then
 		error("Failed to generate text: " .. tostring(text))
+	end
+
+	local command = string.format("fc-scan --format %%{lang} %s", font_path)
+	local handle = io.popen(command)
+	local lang_codes
+	if handle then
+		lang_codes = handle:read("*a")
+		handle:close()
+	end
+
+	if not contains_latin_language_code(lang_codes) then
+		print("Font has not declared support for a latin script, expect the unexpected.")
 	end
 
 	-- Ensure both images have the same format before compositing
