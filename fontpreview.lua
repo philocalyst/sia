@@ -367,7 +367,7 @@ local function generate_preview(config)
 	local fg_r, fg_g, fg_b = parse_hex_color(config.fg_color)
 
 	-- Generate text
-	local font_path = os.getenv("PWD") .. "/" .. config.input
+	local font_path = (config.input:match("^[/~]") and config.input or os.getenv("PWD") .. "/" .. config.input)
 	local font_family = get_font_name(font_path)
 	local ok, text = pcall(function()
 		local text_img = vips.Image.text(config.preview_text, {
