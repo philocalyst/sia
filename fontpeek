@@ -1,4 +1,4 @@
-#!/usr/bin/env lua
+#!/usr/bin/env luajit
 local script_path = debug.getinfo(1, "S").source:sub(2)
 local script_dir = script_path:match("(.*[/\\])") or "./"
 
@@ -8,7 +8,7 @@ package.path = package.path
 	.. "lua_modules/share/lua/5.1/?/init.lua"
 	.. ";"
 	.. script_dir
-	.. "lua_modules/share/lua/5.1/vips/?.lua"
+	.. "lua_modules/share/lua/5.1/?.lua"
 
 local ok, vips = pcall(require, "vips")
 if not ok then
