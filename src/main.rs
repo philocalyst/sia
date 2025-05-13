@@ -43,59 +43,21 @@ struct Dimensions {
 }
 
 impl FromStr for Dimensions {
-    type Err = AppError;
-    fn from_str(s: &str) -> Result<Self, AppError> {
+    type Err = SiaError;
+    fn from_str(s: &str) -> Result<Self, SiaError> {
         let mut parts = s.split('x');
         let w = parts
             .next()
             .and_then(|p| p.parse().ok())
-            .ok_or_else(|| AppError::InvalidConfig("size".into()))?;
+            .ok_or_else(|| SiaError::InvalidConfig("size".into()))?;
         let h = parts
             .next()
             .and_then(|p| p.parse().ok())
-            .ok_or_else(|| AppError::InvalidConfig("size".into()))?;
+            .ok_or_else(|| SiaError::InvalidConfig("size".into()))?;
         Ok(Dimensions {
             width: w,
             height: h,
         })
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-struct Color {
-    r: u8,
-    g: u8,
-    b: u8,
-}
-
-impl FromStr for Color {
-    type Err = AppError;
-    fn from_str(s: &str) -> Result<Self, AppError> {
-        let hex = s.trim_start_matches('#');
-        match hex.len() {
-            3 => {
-                let r = u8::from_str_radix(&hex[0..1], 16)
-                    .map_err(|_| AppError::InvalidConfig("color".into()))?
-                    * 17;
-                let g = u8::from_str_radix(&hex[1..2], 16)
-                    .map_err(|_| AppError::InvalidConfig("color".into()))?
-                    * 17;
-                let b = u8::from_str_radix(&hex[2..3], 16)
-                    .map_err(|_| AppError::InvalidConfig("color".into()))?
-                    * 17;
-                Ok(Color { r, g, b })
-            }
-            6 => {
-                let r = u8::from_str_radix(&hex[0..2], 16)
-                    .map_err(|_| AppError::InvalidConfig("color".into()))?;
-                let g = u8::from_str_radix(&hex[2..4], 16)
-                    .map_err(|_| AppError::InvalidConfig("color".into()))?;
-                let b = u8::from_str_radix(&hex[4..6], 16)
-                    .map_err(|_| AppError::InvalidConfig("color".into()))?;
-                Ok(Color { r, g, b })
-            }
-            _ => Err(AppError::InvalidConfig("color".into())),
-        }
     }
 }
 
@@ -109,11 +71,11 @@ impl Alpha {
 }
 
 impl FromStr for Alpha {
-    type Err = AppError;
-    fn from_str(s: &str) -> Result<Self, AppError> {
+    type Err = SiaError;
+    fn from_str(s: &str) -> Result<Self, SiaError> {
         let v: f32 = s
             .parse()
-            .map_err(|_| AppError::InvalidConfig("alpha".into()))?;
+            .map_err(|_| SiaError::InvalidConfig("alpha".into()))?;
         Ok(Alpha(v.clamp(0.0, 1.0)))
     }
 }
@@ -128,11 +90,11 @@ impl fmt::Display for Alpha {
 struct FontSize(f32);
 
 impl FromStr for FontSize {
-    type Err = AppError;
-    fn from_str(s: &str) -> Result<Self, AppError> {
+    type Err = SiaError;
+    fn from_str(s: &str) -> Result<Self, SiaError> {
         let v: f32 = s
             .parse()
-            .map_err(|_| AppError::InvalidConfig("font-size".into()))?;
+            .map_err(|_| SiaError::InvalidConfig("font-size".into()))?;
         Ok(FontSize(v.max(1.0)))
     }
 }
@@ -144,7 +106,7 @@ impl fmt::Display for FontSize {
 }
 
 #[derive(Debug, Error)]
-enum AppError {
+enum SiaError {
     #[error("I/O error: {0}")]
     Io(#[from] io::Error),
 
@@ -164,11 +126,27 @@ enum AppError {
     FontNameDetect(String),
 }
 
+fn parse_rgba8(s: &str) -> Result<rgb::RGBA8, String> {
+    let hex = s.trim().strip_prefix('#').unwrap_or(s);
+    match hex.len() {
+        6 => {
+            let r8 = u8::from_str_radix(&hex[0..2], 16).map_err(|e| e.to_string())?;
+            let g8 = u8::from_str_radix(&hex[2..4], 16).map_err(|e| e.to_string())?;
+            let b8 = u8::from_str_radix(&hex[4..6], 16).map_err(|e| e.to_string())?;
+            Ok(rgb::RGBA::new(r8, g8, b8, u8::MAX))
+        }
+        _ => Err(format!(
+            "invalid color `{}`, expected #RRGGBB or #RRGGBBAA",
+            s
+        )),
+    }
+}
+
 #[derive(Parser, Debug)]
 #[command(name = "sia", version = "1.0.0", about = "Generate a font preview")]
 struct Cli {
     /// Input font file path
-    #[arg(short = 'f', long = "font-path", value_name = "FILE")]
+    #[arg()]
     font_path: PathBuf,
 
     /// Output image file (default: <font>.png)
@@ -184,12 +162,12 @@ struct Cli {
     font_size: FontSize,
 
     /// Background color
-    #[arg(long, default_value = "#FFFFFF", env = "SIA_BG_COLOR")]
-    bg_color: Color,
+    #[arg(long, default_value = "#FFFFFF", env = "SIA_BG_COLOR", value_parser = parse_rgba8,)]
+    bg_color: rgb::RGBA8,
 
     /// Text color
-    #[arg(long, default_value = "#000000", env = "SIA_FG_COLOR")]
-    fg_color: Color,
+    #[arg(long, default_value = "#000000", env = "SIA_FG_COLOR", value_parser = parse_rgba8,)]
+    fg_color: rgb::RGBA8,
 
     /// Background alpha
     #[arg(long, default_value_t = Alpha(1.0), env = "SIA_BG_ALPHA")]
