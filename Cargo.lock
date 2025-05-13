@@ -290,20 +290,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fontpreview"
-version = "1.1.0"
-dependencies = [
- "clap",
- "env_logger",
- "image",
- "imageproc",
- "lazy_static",
- "log",
- "rusttype",
- "thiserror",
-]
-
-[[package]]
 name = "getrandom"
 version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -729,6 +715,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
+name = "rgb"
+version = "0.8.50"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57397d16646700483b67d2dd6511d79318f9d057fdbd21a4066aeac8b41d310a"
+dependencies = [
+ "bytemuck",
+]
+
+[[package]]
 name = "rusttype"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -745,6 +740,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96b02de82ddbe1b636e6170c21be622223aea188ef2e139be0a5b219ec215323"
 dependencies = [
  "bytemuck",
+]
+
+[[package]]
+name = "sia"
+version = "1.1.0"
+dependencies = [
+ "clap",
+ "env_logger",
+ "image",
+ "imageproc",
+ "lazy_static",
+ "log",
+ "rgb",
+ "rusttype",
+ "thiserror",
 ]
 
 [[package]]
