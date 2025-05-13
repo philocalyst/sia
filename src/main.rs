@@ -118,8 +118,8 @@ enum SiaError {
     #[error("Invalid configuration: {0}")]
     InvalidConfig(String),
 
-    #[error("Invalid configuration: {0}")]
-    ParseError(String),
+    #[error("Error While Parsing: {0}")]
+    Parse(String),
 
     #[error("Font load failure: {0}")]
     FontLoad(String),
@@ -129,9 +129,18 @@ enum SiaError {
 
     #[error("Font‐name detection error: {0}")]
     FontNameDetect(String),
+
+    #[error("Sia Error: {0}")]
+    Message(String),
 }
 
-fn parse_input(input_string: &str) -> Result<String, ParseError> {
+impl From<String> for SiaError {
+    fn from(s: String) -> Self {
+        SiaError::Message(s)
+    }
+}
+
+fn parse_input(input_string: &str) -> Result<String, SiaError> {
     let path = Path::new(input_string);
     if path.exists() {
         Ok(fs::read_to_string(path).expect("If it's found it should read"))
@@ -140,7 +149,7 @@ fn parse_input(input_string: &str) -> Result<String, ParseError> {
     }
 }
 
-fn parse_rgba8(hex_code: &str) -> Result<RGBA8, String> {
+fn parse_rgba8(hex_code: &str) -> Result<RGBA8, SiaError> {
     // strip leading ‘#’ if any
     let hex = hex_code.trim().strip_prefix('#').unwrap_or(hex_code);
 
@@ -160,10 +169,10 @@ fn parse_rgba8(hex_code: &str) -> Result<RGBA8, String> {
             let a = u8::from_str_radix(&hex[6..8], 16).map_err(|e| e.to_string())?;
             Ok(RGBA8::new(r, g, b, a))
         }
-        _ => Err(format!(
+        _ => Err(SiaError::Parse(format!(
             "invalid color `{}`, expected `#RRGGBB` or `#RRGGBBAA`",
             hex_code
-        )),
+        ))),
     }
 }
 
@@ -183,7 +192,7 @@ struct Cli {
     size: Dimensions,
 
     /// Font size in px
-    #[arg(long, default_value_t = FontSize(23.0), env = "SIA_FONT_SIZE")]
+    #[arg(long, default_value_t = FontSize(80.0), env = "SIA_FONT_SIZE")]
     font_size: FontSize,
 
     /// Background color
@@ -232,7 +241,7 @@ fn run() -> Result<(), SiaError> {
     let output = cli
         .output
         .clone()
-        .unwrap_or_else(|| font_path.with_extension("png"));
+        .unwrap_or_else(|| PathBuf::from("output").with_extension("png"));
 
     // Build background canvas
     let w = cli.size.width;
