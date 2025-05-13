@@ -176,31 +176,31 @@ struct Cli {
     font_path: PathBuf,
 
     /// Output image file (default: <font>.png)
-    #[arg(short, long)]
+    #[arg(short, long, env = "SIA_OUT_FILE")]
     output: Option<PathBuf>,
 
     /// Image size WxH
-    #[arg(long, default_value = "1000x1000")]
+    #[arg(long, default_value = "1000x1000", env = "SIA_DIMENSIONS")]
     size: Dimensions,
 
     /// Font size in px
-    #[arg(long, default_value_t = FontSize(23.0))]
+    #[arg(long, default_value_t = FontSize(23.0), env = "SIA_FONT_SIZE")]
     font_size: FontSize,
 
     /// Background color
-    #[arg(long, default_value = "#FFFFFF")]
+    #[arg(long, default_value = "#FFFFFF", env = "SIA_BG_COLOR")]
     bg_color: Color,
 
     /// Text color
-    #[arg(long, default_value = "#000000")]
+    #[arg(long, default_value = "#000000", env = "SIA_FG_COLOR")]
     fg_color: Color,
 
     /// Background alpha
-    #[arg(long, default_value_t = Alpha(1.0))]
+    #[arg(long, default_value_t = Alpha(1.0), env = "SIA_BG_ALPHA")]
     bg_alpha: Alpha,
 
     /// Text alpha
-    #[arg(long, default_value_t = Alpha(1.0))]
+    #[arg(long, default_value_t = Alpha(1.0), env = "SIA_FG_ALPHA")]
     fg_alpha: Alpha,
 
     /// Text to render (\\n separated)
