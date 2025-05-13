@@ -165,11 +165,7 @@ enum AppError {
 }
 
 #[derive(Parser, Debug)]
-#[command(
-    name = "fontpreview",
-    version = "1.0.0",
-    about = "Generate a font preview"
-)]
+#[command(name = "sia", version = "1.0.0", about = "Generate a font preview")]
 struct Cli {
     /// Input font file path
     #[arg(short = 'f', long = "font-path", value_name = "FILE")]
