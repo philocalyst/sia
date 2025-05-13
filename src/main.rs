@@ -3,7 +3,7 @@ use image::{ImageError, Rgba, RgbaImage};
 use imageproc::drawing::draw_text_mut;
 use lazy_static::lazy_static;
 use log::{debug, error, info, warn};
-use rgb;
+use rgb::RGBA8;
 use rusttype::{Font, Point, Scale};
 use std::fmt;
 use std::fs;
@@ -140,16 +140,29 @@ fn parse_input(input_string: &str) -> Result<String, ParseError> {
     }
 }
 
+fn parse_rgba8(hex_code: &str) -> Result<RGBA8, String> {
+    // strip leading ‘#’ if any
+    let hex = hex_code.trim().strip_prefix('#').unwrap_or(hex_code);
+
     match hex.len() {
         6 => {
-            let r8 = u8::from_str_radix(&hex[0..2], 16).map_err(|e| e.to_string())?;
-            let g8 = u8::from_str_radix(&hex[2..4], 16).map_err(|e| e.to_string())?;
-            let b8 = u8::from_str_radix(&hex[4..6], 16).map_err(|e| e.to_string())?;
-            Ok(rgb::RGBA::new(r8, g8, b8, u8::MAX))
+            // RRGGBB => alpha = 0xFF
+            let r = u8::from_str_radix(&hex[0..2], 16).map_err(|e| e.to_string())?;
+            let g = u8::from_str_radix(&hex[2..4], 16).map_err(|e| e.to_string())?;
+            let b = u8::from_str_radix(&hex[4..6], 16).map_err(|e| e.to_string())?;
+            Ok(RGBA8::new(r, g, b, u8::MAX))
+        }
+        8 => {
+            // RRGGBBAA
+            let r = u8::from_str_radix(&hex[0..2], 16).map_err(|e| e.to_string())?;
+            let g = u8::from_str_radix(&hex[2..4], 16).map_err(|e| e.to_string())?;
+            let b = u8::from_str_radix(&hex[4..6], 16).map_err(|e| e.to_string())?;
+            let a = u8::from_str_radix(&hex[6..8], 16).map_err(|e| e.to_string())?;
+            Ok(RGBA8::new(r, g, b, a))
         }
         _ => Err(format!(
-            "invalid color `{}`, expected #RRGGBB or #RRGGBBAA",
-            s
+            "invalid color `{}`, expected `#RRGGBB` or `#RRGGBBAA`",
+            hex_code
         )),
     }
 }
@@ -174,11 +187,11 @@ struct Cli {
     font_size: FontSize,
 
     /// Background color
-    #[arg(long, default_value = "#FFFFFF", env = "SIA_BG_COLOR", value_parser = parse_rgba8,)]
+    #[arg(long, default_value = "#FFFFFF", env = "SIA_BG_COLOR", value_parser = parse_rgba8)]
     bg_color: rgb::RGBA8,
 
     /// Text color
-    #[arg(long, default_value = "#000000", env = "SIA_FG_COLOR", value_parser = parse_rgba8,)]
+    #[arg(long, default_value = "#000000", env = "SIA_FG_COLOR", value_parser = parse_rgba8)]
     fg_color: rgb::RGBA8,
 
     /// Background alpha
