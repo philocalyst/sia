@@ -3,6 +3,7 @@ use image::{ImageError, Rgba, RgbaImage};
 use imageproc::drawing::draw_text_mut;
 use lazy_static::lazy_static;
 use log::{debug, error, info, warn};
+use rgb;
 use rusttype::{Font, Point, Scale};
 use std::fmt;
 use std::fs;
@@ -190,7 +191,7 @@ fn main() {
     }
 }
 
-fn run() -> Result<(), AppError> {
+fn run() -> Result<(), SiaError> {
     let cli = Cli::parse();
     let font_path = cli.font_path.clone();
 
@@ -201,7 +202,7 @@ fn run() -> Result<(), AppError> {
     // Read font bytes
     let font_data = fs::read(&font_path)?;
     let font =
-        Font::try_from_vec(font_data).ok_or_else(|| AppError::FontLoad("invalid font".into()))?;
+        Font::try_from_vec(font_data).ok_or_else(|| SiaError::FontLoad("invalid font".into()))?;
 
     // Determine output file
     let output = cli
@@ -271,16 +272,16 @@ fn run() -> Result<(), AppError> {
 }
 
 #[cfg(unix)]
-fn get_font_name(path: &Path) -> Result<String, AppError> {
+fn get_font_name(path: &Path) -> Result<String, SiaError> {
     let p = path
         .to_str()
-        .ok_or_else(|| AppError::FontNameDetect("invalid path".into()))?;
+        .ok_or_else(|| SiaError::FontNameDetect("invalid path".into()))?;
     let out = Command::new("fc-scan")
         .args(&["--format", "%{family}", p])
         .output()
-        .map_err(|e| AppError::FontNameDetect(e.to_string()))?;
+        .map_err(|e| SiaError::FontNameDetect(e.to_string()))?;
     if !out.status.success() {
-        return Err(AppError::FontNameDetect(format!(
+        return Err(SiaError::FontNameDetect(format!(
             "fc-scan failed: {:?}",
             out.status
         )));
@@ -317,10 +318,10 @@ fn get_font_name(path: &Path) -> Result<String, AppError> {
 }
 
 #[cfg(windows)]
-fn get_font_name(path: &Path) -> Result<String, AppError> {
+fn get_font_name(path: &Path) -> Result<String, SiaError> {
     let p = path
         .to_str()
-        .ok_or_else(|| AppError::FontNameDetect("invalid path".into()))?;
+        .ok_or_else(|| SiaError::FontNameDetect("invalid path".into()))?;
     let cmd = format!(
         "[System.Drawing.FontFamily]::Families \
          | Where-Object {{ $_.GetName(0) -eq (\"{}\") }} \
@@ -330,9 +331,9 @@ fn get_font_name(path: &Path) -> Result<String, AppError> {
     let out = Command::new("powershell")
         .args(&["-Command", &cmd])
         .output()
-        .map_err(|e| AppError::FontNameDetect(e.to_string()))?;
+        .map_err(|e| SiaError::FontNameDetect(e.to_string()))?;
     if !out.status.success() {
-        return Err(AppError::FontNameDetect(format!(
+        return Err(SiaError::FontNameDetect(format!(
             "powershell failed: {:?}",
             out.status
         )));
@@ -342,21 +343,21 @@ fn get_font_name(path: &Path) -> Result<String, AppError> {
 }
 
 #[cfg(not(any(unix, windows)))]
-fn get_font_name(_: &Path) -> Result<String, AppError> {
+fn get_font_name(_: &Path) -> Result<String, SiaError> {
     Ok("NA".into())
 }
 
 #[cfg(unix)]
-fn detect_latin_support(path: &Path) -> Result<bool, AppError> {
+fn detect_latin_support(path: &Path) -> Result<bool, SiaError> {
     let out = Command::new("fc-scan")
         .args(&[
             "--format",
             "%{lang}",
             path.to_str()
-                .ok_or_else(|| AppError::LatinDetect("invalid font path".into()))?,
+                .ok_or_else(|| SiaError::LatinDetect("invalid font path".into()))?,
         ])
         .output()
-        .map_err(|e| AppError::LatinDetect(e.to_string()))?;
+        .map_err(|e| SiaError::LatinDetect(e.to_string()))?;
     let langs = String::from_utf8_lossy(&out.stdout);
     for code in langs
         .split(|c: char| c == ',' || c == '|' || c.is_whitespace())
@@ -371,7 +372,7 @@ fn detect_latin_support(path: &Path) -> Result<bool, AppError> {
 }
 
 #[cfg(windows)]
-fn detect_latin_support(_path: &Path) -> Result<bool, AppError> {
+fn detect_latin_support(_path: &Path) -> Result<bool, SiaError> {
     // skipping on Windows
     Ok(true)
 }
