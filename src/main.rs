@@ -176,7 +176,7 @@ fn parse_rgba8(hex_code: &str) -> Result<RGBA8, SiaError> {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "sia", version = "1.0.0", about = "Generate a font preview")]
+#[command(name = "sia", version = "0.2.0", about = "Generate a font preview")]
 struct Cli {
     /// Input font file path
     #[arg(short = 'F', long, env = "SIA_FONT")]
