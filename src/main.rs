@@ -171,11 +171,11 @@ fn parse_rgba8(hex_code: &str) -> Result<RGBA8, String> {
 #[command(name = "sia", version = "1.0.0", about = "Generate a font preview")]
 struct Cli {
     /// Input font file path
-    #[arg()]
+    #[arg(short = 'F', long, env = "SIA_FONT")]
     font_path: PathBuf,
 
     /// Output image file (default: <font>.png)
-    #[arg(short, long, env = "SIA_OUT_FILE")]
+    #[arg(short = 'O', long, env = "SIA_OUT_FILE")]
     output: Option<PathBuf>,
 
     /// Image size WxH
