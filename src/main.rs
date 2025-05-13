@@ -3,7 +3,7 @@ use image::{ImageError, Rgba, RgbaImage};
 use imageproc::drawing::draw_text_mut;
 use lazy_static::lazy_static;
 use log::{debug, error, info, warn};
-use rusttype::{Font, Point, Scale, VMetrics};
+use rusttype::{Font, Point, Scale};
 use std::fmt;
 use std::fs;
 use std::io;
@@ -13,14 +13,6 @@ use std::str::FromStr;
 use thiserror::Error;
 
 /// Application version
-const VERSION: &str = "1.1.0";
-
-const DEFAULT_SIZE: &str = "1000x1000";
-const DEFAULT_FONT_SIZE: f32 = 23.0;
-const DEFAULT_BG_COLOR: &str = "#FFFFFF";
-const DEFAULT_FG_COLOR: &str = "#000000";
-const DEFAULT_BG_ALPHA: f32 = 1.0;
-const DEFAULT_FG_ALPHA: f32 = 1.0;
 const DEFAULT_PREVIEW_TEXT: &str = "\
 ABCDEFGHIJKLM
 NOPQRSTUVWXYZ
@@ -173,7 +165,11 @@ enum AppError {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "fontpreview", version = VERSION, about = "Generate a font preview")]
+#[command(
+    name = "fontpreview",
+    version = "1.0.0",
+    about = "Generate a font preview"
+)]
 struct Cli {
     /// Input font file path
     #[arg(short = 'f', long = "font-path", value_name = "FILE")]
@@ -184,27 +180,27 @@ struct Cli {
     output: Option<PathBuf>,
 
     /// Image size WxH
-    #[arg(long, default_value = DEFAULT_SIZE)]
+    #[arg(long, default_value = "1000x1000")]
     size: Dimensions,
 
     /// Font size in px
-    #[arg(long, default_value_t = FontSize(DEFAULT_FONT_SIZE))]
+    #[arg(long, default_value_t = FontSize(23.0))]
     font_size: FontSize,
 
     /// Background color
-    #[arg(long, default_value = DEFAULT_BG_COLOR)]
+    #[arg(long, default_value = "#FFFFFF")]
     bg_color: Color,
 
     /// Text color
-    #[arg(long, default_value = DEFAULT_FG_COLOR)]
+    #[arg(long, default_value = "#000000")]
     fg_color: Color,
 
     /// Background alpha
-    #[arg(long, default_value_t = Alpha(DEFAULT_BG_ALPHA))]
+    #[arg(long, default_value_t = Alpha(1.0))]
     bg_alpha: Alpha,
 
     /// Text alpha
-    #[arg(long, default_value_t = Alpha(DEFAULT_FG_ALPHA))]
+    #[arg(long, default_value_t = Alpha(1.0))]
     fg_alpha: Alpha,
 
     /// Text to render (\\n separated)
