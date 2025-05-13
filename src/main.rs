@@ -11,6 +11,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str::FromStr;
+use std::string::ParseError;
 use thiserror::Error;
 
 /// Application version
@@ -117,6 +118,9 @@ enum SiaError {
     #[error("Invalid configuration: {0}")]
     InvalidConfig(String),
 
+    #[error("Invalid configuration: {0}")]
+    ParseError(String),
+
     #[error("Font load failure: {0}")]
     FontLoad(String),
 
@@ -127,8 +131,15 @@ enum SiaError {
     FontNameDetect(String),
 }
 
-fn parse_rgba8(s: &str) -> Result<rgb::RGBA8, String> {
-    let hex = s.trim().strip_prefix('#').unwrap_or(s);
+fn parse_input(input_string: &str) -> Result<String, ParseError> {
+    let path = Path::new(input_string);
+    if path.exists() {
+        Ok(fs::read_to_string(path).expect("If it's found it should read"))
+    } else {
+        Ok(input_string.to_string())
+    }
+}
+
     match hex.len() {
         6 => {
             let r8 = u8::from_str_radix(&hex[0..2], 16).map_err(|e| e.to_string())?;
@@ -179,7 +190,7 @@ struct Cli {
     fg_alpha: Alpha,
 
     /// Text to render (\\n separated)
-    #[arg(long)]
+    #[arg(short = 'I', long = "input", value_parser = parse_input)]
     preview_text: Option<String>,
 }
 
