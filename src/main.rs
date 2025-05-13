@@ -210,7 +210,7 @@ struct Cli {
     #[arg(long, default_value_t = Alpha(1.0), env = "SIA_FG_ALPHA")]
     fg_alpha: Alpha,
 
-    /// Text to render (\\n separated)
+    /// Text or file to render (\\n separated).
     #[arg(short = 'I', long = "input", value_parser = parse_input)]
     preview_text: Option<String>,
 }
