@@ -11,7 +11,6 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str::FromStr;
-use std::string::ParseError;
 use thiserror::Error;
 
 /// Application version
@@ -310,7 +309,7 @@ fn get_font_name(path: &Path) -> Result<String, SiaError> {
         .to_str()
         .ok_or_else(|| SiaError::FontNameDetect("invalid path".into()))?;
     let out = Command::new("fc-scan")
-        .args(&["--format", "%{family}", p])
+        .args(["--format", "%{family}", p])
         .output()
         .map_err(|e| SiaError::FontNameDetect(e.to_string()))?;
     if !out.status.success() {
@@ -330,9 +329,9 @@ fn get_font_name(path: &Path) -> Result<String, SiaError> {
         fam.split_ascii_whitespace().next().unwrap()
     } else {
         // first proper noun: uppercase + following lowercase
-        let mut chars = fam.char_indices();
+        let chars = fam.char_indices();
         let mut result = None;
-        while let Some((i, c)) = chars.next() {
+        for (i, c) in chars {
             if c.is_uppercase() {
                 let mut end = i + c.len_utf8();
                 for (j, d) in fam[end..].char_indices() {
@@ -383,7 +382,7 @@ fn get_font_name(_: &Path) -> Result<String, SiaError> {
 #[cfg(unix)]
 fn detect_latin_support(path: &Path) -> Result<bool, SiaError> {
     let out = Command::new("fc-scan")
-        .args(&[
+        .args([
             "--format",
             "%{lang}",
             path.to_str()
