@@ -1,3 +1,4 @@
+// External crates
 use clap::Parser;
 use image::{ImageError, Rgba, RgbaImage};
 use imageproc::drawing::draw_text_mut;
@@ -5,23 +6,22 @@ use lazy_static::lazy_static;
 use log::{debug, error, info, warn};
 use rgb::RGBA8;
 use rusttype::{Font, Point, Scale};
-use std::fmt;
-use std::fs;
-use std::io;
+use thiserror::Error;
+
+// Standard library imports
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str::FromStr;
-use thiserror::Error;
+use std::{fmt, fs, io};
 
-/// Application version
+// This is the text that will be displayed when no input is provided
 const DEFAULT_PREVIEW_TEXT: &str = "\
 ABCDEFGHIJKLM
 NOPQRSTUVWXYZ
 abcdefghijklm
 nopqrSTUVWXYZ
 1234567890
-!@$%(){}[]
-السلام عليكم";
+!@$%(){}[]";
 
 lazy_static! {
     static ref LATIN_CODES: Vec<&'static str> = vec![
@@ -204,7 +204,7 @@ struct Cli {
     #[arg(long, default_value = "1000x1000", env = "SIA_DIMENSIONS")]
     size: Dimensions,
 
-    /// Font size in px
+    /// Font size in px, or relative units (%)
     #[arg(long, default_value = "8%", env = "SIA_FONT_SIZE")]
     font_size: FontSize,
 
@@ -250,13 +250,13 @@ fn run() -> Result<(), SiaError> {
     let font =
         Font::try_from_vec(font_data).ok_or_else(|| SiaError::FontLoad("invalid font".into()))?;
 
-    // Determine output file
+    // Determine the output file
     let output = cli
         .output
         .clone()
         .unwrap_or_else(|| PathBuf::from("output").with_extension("png"));
 
-    // Build background canvas
+    // Build the background canvas
     let w = cli.size.width;
     let h = cli.size.height;
     let mut img = RgbaImage::from_pixel(
@@ -270,6 +270,7 @@ fn run() -> Result<(), SiaError> {
         ]),
     );
 
+    // Derive the true font_size
     let font_size: f32 = match cli.font_size {
         FontSize::Px(size) => size,
         FontSize::Rel(size) => w as f32 * size, // Mutating into f32, it should never be a negative value anyways.
@@ -294,6 +295,7 @@ fn run() -> Result<(), SiaError> {
         cli.fg_alpha.to_u8(),
     ]);
 
+    // Rendering
     info!("Rendering {} lines…", lines.len());
     for (i, &line) in lines.iter().enumerate() {
         // measure line width
@@ -302,6 +304,8 @@ fn run() -> Result<(), SiaError> {
             .fold(0.0, |acc, g| {
                 acc + g.unpositioned().h_metrics().advance_width
             });
+
+        // Determine accurate drawing position
         let x = ((w as f32 - w_line) / 2.0).round() as i32;
         let y = start_y + (i as f32 * line_height).round() as i32;
         debug!("Line {} @ ({}, {})", i, x, y);
