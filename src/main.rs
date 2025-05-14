@@ -87,22 +87,36 @@ impl fmt::Display for Alpha {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-struct FontSize(f32);
+#[derive(Clone, Debug)]
+enum FontSize {
+    Px(f32),
+    Rel(f32), // fraction of the image's width
+}
 
 impl FromStr for FontSize {
-    type Err = SiaError;
-    fn from_str(s: &str) -> Result<Self, SiaError> {
-        let v: f32 = s
-            .parse()
-            .map_err(|_| SiaError::InvalidConfig("font-size".into()))?;
-        Ok(FontSize(v.max(1.0)))
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<FontSize, String> {
+        if let Some(rest) = s.strip_suffix('%') {
+            let pct = rest
+                .parse::<f32>()
+                .map_err(|e| format!("bad percent: {}", e))?;
+            Ok(FontSize::Rel(pct / 100.0))
+        } else {
+            let px = s
+                .parse::<f32>()
+                .map_err(|e| format!("bad pixel size: {}", e))?;
+            Ok(FontSize::Px(px))
+        }
     }
 }
 
 impl fmt::Display for FontSize {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        match self {
+            FontSize::Px(size) => write!(f, "{}", size),
+            FontSize::Rel(size) => write!(f, "{}", size),
+        }
     }
 }
 
@@ -191,7 +205,7 @@ struct Cli {
     size: Dimensions,
 
     /// Font size in px
-    #[arg(long, default_value_t = FontSize(80.0), env = "SIA_FONT_SIZE")]
+    #[arg(long, default_value = "8%", env = "SIA_FONT_SIZE")]
     font_size: FontSize,
 
     /// Background color
@@ -256,8 +270,13 @@ fn run() -> Result<(), SiaError> {
         ]),
     );
 
+    let font_size: f32 = match cli.font_size {
+        FontSize::Px(size) => size,
+        FontSize::Rel(size) => w as f32 * size, // Mutating into f32, it should never be a negative value anyways.
+    };
+
     // Prepare text layout
-    let scale = Scale::uniform(cli.font_size.0);
+    let scale = Scale::uniform(font_size);
     let v_metrics = font.v_metrics(scale);
     let line_height = (v_metrics.ascent - v_metrics.descent + v_metrics.line_gap).ceil();
     let text = cli
