@@ -17,12 +17,6 @@ use syntect::util::LinesWithEndings;
 
 use crate::SiaError;
 
-fn xml_escape(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-}
-
 pub fn write_svg<W: Write>(
     writer: &mut W,
     ss: &SyntaxSet,
@@ -91,7 +85,14 @@ pub fn write_svg<W: Write>(
         for &(ref style, segment) in regions {
             // If style provided holds no background or foreground, emit unstyled text.
             let is_default = style.foreground == fg && style.font_style.is_empty();
-            let esc = xml_escape(segment);
+            let esc = match segment {
+                "<" => "&lt;",
+                ">" => "&gt;",
+                "\"" => "&quot;",
+                " " => "&#160;",
+                "	" => "&#160;&#160;&#160;&#160;",
+                _other => segment,
+            };
 
             if is_default {
                 text = text.add(svg::node::Text::new(esc));
