@@ -11,7 +11,7 @@ use svg::node::element::{
 use svg::Document;
 use svg::Node;
 use syntect::easy::HighlightLines;
-use syntect::highlighting::{Style, Theme};
+use syntect::highlighting::{Style, Theme, ThemeSet};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
@@ -19,21 +19,22 @@ use crate::SiaError;
 
 pub fn write_svg<W: Write>(
     writer: &mut W,
-    ss: &SyntaxSet,
     theme: &Theme,
-    syntax_name: &str,
+    syntax: &str,
     source: &str,
     font_family: &str,
 ) -> std::io::Result<()> {
     // |1| Prepare highlighter
+    let ss = SyntaxSet::load_defaults_newlines();
     let syntax = ss
-        .find_syntax_by_token(syntax_name)
+        .find_syntax_by_token(syntax)
         .unwrap_or_else(|| ss.find_syntax_plain_text());
+
     let mut highlighter = HighlightLines::new(syntax, theme);
 
     // |2| Highlight each line into Vec<(Style, &str)>
     let lines: Vec<Vec<(Style, &str)>> = LinesWithEndings::from(source)
-        .map(|ln| highlighter.highlight_line(ln, ss).unwrap())
+        .map(|ln| highlighter.highlight_line(ln, &ss).unwrap())
         .collect();
 
     // |3| Compute dimensions (approx 8px per character)
