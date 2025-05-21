@@ -128,6 +128,12 @@ enum SiaError {
     #[error("I/O error: {0}")]
     Io(#[from] io::Error),
 
+    #[error("XML Parse error: {0}")]
+    XmlParseError(String),
+
+    #[error("Invalid SVG: {0}")]
+    InvalidSvg(String),
+
     #[error("Image error: {0}")]
     Image(#[from] ImageError),
 
