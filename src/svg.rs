@@ -1,12 +1,14 @@
 // Code for generating the svg file
 
 use quick_xml;
-use roxmltree;
 use std::fs;
 use std::path::PathBuf;
-
-use quick_xml::events::Event;
-use quick_xml::reader::Reader;
+use svg::node::element::{
+    Circle, ClipPath, Definitions, Filter, FilterEffectGaussianBlur, FilterEffectMerge,
+    FilterEffectMergeNode, FilterEffectOffset, Group, Rectangle,
+};
+use svg::Document;
+use svg::Node;
 
 use crate::SiaError;
 fn get_svg_elements<'a>(
@@ -29,4 +31,34 @@ fn get_svg_elements<'a>(
     }
 
     Ok(doc)
+}
+
+fn add_shadow(document: Document, id: &str, x_offset: f64, y_offset: f64, blur: f64) -> Document {
+    // Gaussian blur the alpha channel
+    let gaussian = FilterEffectGaussianBlur::new()
+        .set("in", "SourceAlpha")
+        .set("stdDeviation", blur);
+
+    // Offset the blurred
+    let offset = FilterEffectOffset::new()
+        .set("result", "offsetblur")
+        .set("dx", x_offset)
+        .set("dy", y_offset);
+
+    // Merge the offset blur with the original graphic
+    let merge = FilterEffectMerge::new()
+        .add(FilterEffectMergeNode::new())
+        .add(FilterEffectMergeNode::new().set("in", "SourceGraphic"));
+
+    // Build the <filter> element
+    let filter = Filter::new()
+        .set("id", id)
+        .set("filterUnits", "userSpaceOnUse")
+        .add(gaussian)
+        .add(offset)
+        .add(merge);
+
+    // Wrap it in <defs> and append
+    let defs = Definitions::new().add(filter);
+    document.add(defs)
 }
