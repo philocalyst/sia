@@ -96,29 +96,14 @@ fn add_outline<'a, E: Node>(elem: &'a mut E, width: f64, color: &str) -> &'a mut
     elem
 }
 
-/// Creates a little “window‐control” bar (<g>) of three coloured circles.
-fn new_window_controls(r: f64, spacing: f64, y: f64) -> Group {
-    let mut group = Group::new();
-    for (i, &col) in ["#FF5A54", "#E6BF29", "#52C12B"].iter().enumerate() {
-        let cx = (i as f64 + 1.0) * spacing - r;
-        let circle = Circle::new()
-            .set("cx", cx)
-            .set("cy", y)
-            .set("r", r)
-            .set("fill", col);
-        group = group.add(circle);
-    }
-    group
-}
-
-/// Sets width/height attributes on any builder‐style element.
+/// Sets width/height attributes
 fn set_dimensions<E: Node>(elem: &mut E, width: f64, height: f64) -> &mut E {
     elem.assign("width", width);
     elem.assign("height", height);
     elem
 }
 
-/// Reads `width`/`height` attributes (e.g. `"500px"` or `"200"`) and returns ints.
+/// Reads `width`/`height` attributes (e.g. `"500px"` or `"200"`) and returns integers.
 fn get_dimensions<E: Node>(elem: &E) -> (i32, i32) {
     let element_attributes = elem.get_attributes().unwrap();
     let w = element_attributes.get("width").unwrap();
