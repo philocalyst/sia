@@ -2,15 +2,133 @@
 
 use quick_xml;
 use std::fs;
+use std::io::Write;
 use std::path::PathBuf;
 use svg::node::element::{
-    Circle, ClipPath, Definitions, Filter, FilterEffectGaussianBlur, FilterEffectMerge,
-    FilterEffectMergeNode, FilterEffectOffset, Group, Rectangle,
+    ClipPath, Definitions, Filter, FilterEffectGaussianBlur, FilterEffectMerge,
+    FilterEffectMergeNode, FilterEffectOffset, Group, Rectangle, TSpan, Text,
 };
 use svg::Document;
 use svg::Node;
+use syntect::easy::HighlightLines;
+use syntect::highlighting::{Style, Theme};
+use syntect::parsing::SyntaxSet;
+use syntect::util::LinesWithEndings;
 
 use crate::SiaError;
+
+fn xml_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+}
+
+pub fn write_svg<W: Write>(
+    writer: &mut W,
+    ss: &SyntaxSet,
+    theme: &Theme,
+    syntax_name: &str,
+    source: &str,
+    font_family: &str,
+) -> std::io::Result<()> {
+    // |1| Prepare highlighter
+    let syntax = ss
+        .find_syntax_by_token(syntax_name)
+        .unwrap_or_else(|| ss.find_syntax_plain_text());
+    let mut highlighter = HighlightLines::new(syntax, theme);
+
+    // |2| Highlight each line into Vec<(Style, &str)>
+    let lines: Vec<Vec<(Style, &str)>> = LinesWithEndings::from(source)
+        .map(|ln| highlighter.highlight_line(ln, ss).unwrap())
+        .collect();
+
+    // |3| Compute dimensions (approx 8px per character)
+    let max_chars = lines
+        .iter()
+        .map(|regions| regions.iter().map(|&(_, txt)| txt.len()).sum())
+        .max()
+        .unwrap_or(0);
+    let char_w = 8.0;
+    let width_px = max_chars as f64 * char_w;
+    let line_count = lines.len() as f64;
+    let height_px = 10.0 + 16.8 * (line_count + 1.0);
+
+    // |4| Extract default bg/fg from theme.settings
+    let bg = theme.settings.background.unwrap();
+    let fg = theme.settings.foreground.unwrap();
+    let bg_hex = format!("#{:02X}{:02X}{:02X}", bg.r, bg.g, bg.b);
+    let fg_hex = format!("#{:02X}{:02X}{:02X}", fg.r, fg.g, fg.b);
+
+    // |5| Build up the SVG document
+    let mut doc = Document::new()
+        .set("xmlns", "http://www.w3.org/2000/svg")
+        .set("width", format!("{:.0}px", width_px))
+        .set("height", format!("{:.0}px", height_px));
+
+    // Draw background rect
+    let bg_rect = Rectangle::new()
+        .set("width", "100%")
+        .set("height", "100%")
+        .set("fill", bg_hex.clone());
+    doc = doc.add(bg_rect);
+
+    // a semantic <g> for all text
+    let mut g = Group::new()
+        .set("font-family", font_family)
+        .set("font-size", "14px")
+        .set("fill", fg_hex.clone());
+
+    // |6| Just one <text> element per line
+    for (i, regions) in lines.iter().enumerate() {
+        // y in “em”
+        let y_em = (i + 1) as f64 * 1.2;
+        let mut text = Text::new("")
+            .set("x", 0)
+            .set("y", format!("{:.2}em", y_em))
+            .set("xml:space", "preserve");
+
+        let mut x_offset = 0.0;
+        for &(ref style, segment) in regions {
+            // If style provided holds no background or foreground, emit unstyled text.
+            let is_default = style.foreground == fg && style.font_style.is_empty();
+            let esc = xml_escape(segment);
+
+            if is_default {
+                text = text.add(svg::node::Text::new(esc));
+            } else {
+                // Otherwise wrap in <tspan> with only the differing attrs
+                let mut t = TSpan::new("").set("x", format!("{:.2}px", x_offset)).set(
+                    "fill",
+                    format!(
+                        "#{:02X}{:02X}{:02X}", // Ensure that each RGB value converts accurately to a HEX
+                        style.foreground.r, style.foreground.g, style.foreground.b
+                    ),
+                );
+                use syntect::highlighting::FontStyle;
+                if style.font_style.contains(FontStyle::BOLD) {
+                    t = t.set("font-weight", "bold");
+                }
+                if style.font_style.contains(FontStyle::ITALIC) {
+                    t = t.set("font-style", "italic");
+                }
+                t = t.add(svg::node::Text::new(esc));
+                text = text.add(t);
+            }
+
+            // Advance x by chars * char_w
+            x_offset += segment.chars().count() as f64 * char_w;
+        }
+
+        g = g.add(text);
+    }
+
+    doc = doc.add(g);
+
+    // 7) Write it out
+    write!(writer, "{}", doc.to_string())?;
+    Ok(())
+}
+
 fn get_svg_elements<'a>(
     svg_path: PathBuf,
     contents: &'a mut String,
