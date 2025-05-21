@@ -14,6 +14,8 @@ use std::process::Command;
 use std::str::FromStr;
 use std::{fmt, fs, io};
 
+mod svg;
+
 // This is the text that will be displayed when no input is provided
 const DEFAULT_PREVIEW_TEXT: &str = "\
 ABCDEFGHIJKLM
@@ -23,6 +25,7 @@ nopqrSTUVWXYZ
 1234567890
 !@$%(){}[]";
 
+// The latin codes I know about. Compiled very ad-hoc, so if there are any missing please let me know. I would value some good advice here
 lazy_static! {
     static ref LATIN_CODES: Vec<&'static str> = vec![
         "aa", "af", "ay", "bi", "br", "bs", "ca", "ch", "co", "cs", "cy", "da", "de", "en", "eo",
@@ -399,7 +402,7 @@ fn get_font_name(path: &Path) -> Result<String, SiaError> {
 
 #[cfg(not(any(unix, windows)))]
 fn get_font_name(_: &Path) -> Result<String, SiaError> {
-    Ok("NA".into())
+    Ok("NA".into()) // I don't know what to do here, looking for advice. Would this be BSD-based systems?
 }
 
 #[cfg(unix)]
