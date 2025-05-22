@@ -40,6 +40,19 @@ lazy_static! {
     ];
 }
 
+struct FontConfig<'a> {
+    font_family: Font<'a>,
+    font_name: String,
+}
+
+use file_format::FileFormat;
+#[derive(Clone, Debug)]
+struct Input {
+    file_handler: Option<PathBuf>,
+    contents: String,
+    kind: FileFormat,
+}
+
 #[derive(Debug, Clone, Copy)]
 struct Dimensions {
     width: u32,
@@ -162,12 +175,29 @@ impl From<String> for SiaError {
     }
 }
 
-fn parse_input(input_string: &str) -> Result<String, SiaError> {
-    let path = Path::new(input_string);
-    if path.exists() {
-        Ok(fs::read_to_string(path).expect("If it's found it should read"))
+fn parse_input(s: &str) -> Result<Input, SiaError> {
+    let path = PathBuf::from(s);
+    if path.exists() && path.is_file() {
+        // Read the full file as bytes
+        let data = fs::read(&path).map_err(|e| SiaError::Io(e))?;
+        // Guess the file format
+        let kind = FileFormat::from_bytes(&data);
+        // Convert bytes → String, replacing invalid UTF-8
+        let contents = String::from_utf8_lossy(&data).into_owned();
+        Ok(Input {
+            file_handler: Some(path),
+            contents,
+            kind,
+        })
     } else {
-        Ok(input_string.to_string())
+        // Treat input literally as UTF-8 text
+        let bytes = s.as_bytes();
+        let kind = FileFormat::from_bytes(bytes);
+        Ok(Input {
+            file_handler: None,
+            contents: s.to_string(),
+            kind,
+        })
     }
 }
 
@@ -235,7 +265,7 @@ struct Cli {
 
     /// Text or file to render (\\n separated).
     #[arg(short = 'I', long = "input", value_parser = parse_input)]
-    preview_text: Option<String>,
+    input: Input,
 }
 
 fn main() {
@@ -248,7 +278,7 @@ fn main() {
 
 fn run() -> Result<(), SiaError> {
     let cli = Cli::parse();
-    let font_path = cli.font_path.clone();
+    let font_path = cli.font_path;
 
     // Detect font family name
     let family = get_font_name(&font_path)?;
@@ -289,10 +319,7 @@ fn run() -> Result<(), SiaError> {
     let scale = Scale::uniform(font_size);
     let v_metrics = font.v_metrics(scale);
     let line_height = (v_metrics.ascent - v_metrics.descent + v_metrics.line_gap).ceil();
-    let text = cli
-        .preview_text
-        .clone()
-        .unwrap_or_else(|| DEFAULT_PREVIEW_TEXT.to_string());
+    let text = cli.input.contents;
     let lines: Vec<&str> = text.lines().collect();
     let block_height = line_height * lines.len() as f32;
     let start_y = ((h as f32 - block_height) / 2.0 + v_metrics.ascent).round() as i32;
