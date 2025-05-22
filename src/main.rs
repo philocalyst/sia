@@ -35,8 +35,9 @@ lazy_static! {
 }
 
 struct FontConfig<'a> {
-    font_family: Font<'a>,
+    font: Font<'a>,
     scale: Scale,
+    line_height: f32,
     font_name: String,
     font_size: f32,
 }
@@ -277,9 +278,13 @@ fn run() -> Result<(), SiaError> {
     let font =
         Font::try_from_vec(font_data).ok_or_else(|| SiaError::FontLoad("invalid font".into()))?;
 
+    let v_metrics = font.v_metrics(scale);
+    let line_height = (v_metrics.ascent - v_metrics.descent + v_metrics.line_gap).ceil();
+
     let full_font = FontConfig {
-        font_family: font,
+        font,
         scale,
+        line_height,
         font_name: family,
         font_size,
     };
@@ -310,8 +315,6 @@ fn run() -> Result<(), SiaError> {
     );
 
     // Prepare text layout
-    let v_metrics = full_font.font_family.v_metrics(scale);
-    let line_height = (v_metrics.ascent - v_metrics.descent + v_metrics.line_gap).ceil();
     let text = cli.input.contents.source;
     let lines: Vec<&str> = text.lines().collect();
     let block_height = line_height * lines.len() as f32;
@@ -329,7 +332,7 @@ fn run() -> Result<(), SiaError> {
     for (i, &line) in lines.iter().enumerate() {
         // measure line width
         let w_line: f32 = full_font
-            .font_family
+            .font
             .layout(line, scale, Point { x: 0.0, y: 0.0 })
             .fold(0.0, |acc, g| {
                 acc + g.unpositioned().h_metrics().advance_width
@@ -339,15 +342,7 @@ fn run() -> Result<(), SiaError> {
         let x = ((size.width as f32 - w_line) / 2.0).round() as i32;
         let y = start_y + (i as f32 * line_height).round() as i32;
         debug!("Line {} @ ({}, {})", i, x, y);
-        draw_text_mut(
-            &mut img,
-            fg_pixel,
-            x,
-            y,
-            scale,
-            &full_font.font_family,
-            line,
-        );
+        draw_text_mut(&mut img, fg_pixel, x, y, scale, &full_font.font, line);
     }
 
     // Script‐support check
