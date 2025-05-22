@@ -16,14 +16,14 @@ use syntect::highlighting::{Style, Theme, ThemeSet};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
-use crate::SiaError;
+use crate::{FontConfig, SiaError};
 
 pub fn write_svg<W: Write>(
     writer: &mut W,
     theme: &Theme,
     syntax: &str,
     source: &str,
-    font_family: &Font,
+    font: &FontConfig,
 ) -> std::io::Result<()> {
     // |1| Prepare highlighter
     let ss = SyntaxSet::load_defaults_newlines();
@@ -48,8 +48,9 @@ pub fn write_svg<W: Write>(
         .max()
         .unwrap_or(0) as f32;
 
-    // Were using A as a reference width as it's a good average.
-    let advance_width = font_family
+    // Were using A as a reference width char as it's a good average.
+    let advance_width = font
+        .font_family
         .glyph('A')
         .scaled(scale)
         .h_metrics()
@@ -59,7 +60,7 @@ pub fn write_svg<W: Write>(
     let width_px = max_chars * advance_width;
 
     // Get vertical metrics & compute line height
-    let v_metrics = font_family.v_metrics(scale);
+    let v_metrics = font.font_family.v_metrics(scale);
     let line_height = v_metrics.ascent - v_metrics.descent + v_metrics.line_gap;
 
     // Compute total height in px (and add one extra line’s worth of padding)
@@ -86,7 +87,7 @@ pub fn write_svg<W: Write>(
 
     // a semantic <g> for all text
     let mut g = Group::new()
-        .set("font-family", font_family)
+        .set("font-family", font.font_name.clone())
         .set("font-size", "14px")
         .set("fill", fg_hex.clone());
 
@@ -135,7 +136,7 @@ pub fn write_svg<W: Write>(
             }
 
             // Advance x by chars * char_w
-            x_offset += segment.chars().count() as f32 * char_w.advance_width;
+            x_offset += segment.chars().count() as f32 * advance_width;
         }
 
         g = g.add(text);
@@ -146,28 +147,6 @@ pub fn write_svg<W: Write>(
     // 7) Write it out
     write!(writer, "{}", doc.to_string())?;
     Ok(())
-}
-
-fn get_svg_elements<'a>(
-    svg_path: PathBuf,
-    contents: &'a mut String,
-) -> Result<roxmltree::Document<'a>, SiaError> {
-    // Read the file contents into the string buffer
-    *contents = fs::read_to_string(svg_path)?;
-
-    // Parse the XML
-    let doc =
-        roxmltree::Document::parse(contents).map_err(|e| SiaError::XmlParseError(e.to_string()))?;
-
-    // Ensure that it is an svg
-    let root_element = doc.root_element();
-    if !root_element.has_tag_name("svg") {
-        return Err(SiaError::InvalidSvg(
-            "Root element is not an SVG element".to_string(),
-        ));
-    }
-
-    Ok(doc)
 }
 
 fn add_shadow(elem: Document, id: &str, x_offset: f64, y_offset: f64, blur: f64) -> Document {
