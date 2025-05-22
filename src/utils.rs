@@ -33,6 +33,9 @@ pub fn get_canvas_size(
         // Compute total height in px (and add one extra line’s worth of padding)
         let height_px = line_height as u32 * (num_lines + 1);
 
-        font
+        Dimensions {
+            width: width_px,
+            height: height_px,
+        }
     }
 }
