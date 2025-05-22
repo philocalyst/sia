@@ -16,25 +16,24 @@ use syntect::highlighting::{Style, Theme, ThemeSet};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
-use crate::{FontConfig, SiaError};
+use crate::{FontConfig, Input, SiaError};
 
-pub fn write_svg<W: Write>(
+pub fn code_to_svg<W: Write>(
     writer: &mut W,
     theme: &Theme,
-    syntax: &str,
-    source: &str,
+    source: &Input,
     font: &FontConfig,
 ) -> std::io::Result<()> {
     // |1| Prepare highlighter
     let ss = SyntaxSet::load_defaults_newlines();
     let syntax = ss
-        .find_syntax_by_token(syntax)
+        .find_syntax_by_token(source.kind.extension())
         .unwrap_or_else(|| ss.find_syntax_plain_text());
 
     let mut highlighter = HighlightLines::new(syntax, theme);
 
     // |2| Highlight each line into Vec<(Style, &str)>
-    let lines: Vec<Vec<(Style, &str)>> = LinesWithEndings::from(source)
+    let lines: Vec<Vec<(Style, &str)>> = LinesWithEndings::from(&source.contents)
         .map(|ln| highlighter.highlight_line(ln, &ss).unwrap())
         .collect();
 
