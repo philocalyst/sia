@@ -19,7 +19,7 @@ use syntect::util::LinesWithEndings;
 
 use crate::{FontConfig, Input, SiaError};
 
-pub fn code_to_svg(theme: &Theme, source: &Input, font: &FontConfig) -> Result<String, Error> {
+pub fn code_to_svg(theme: &Theme, source: &Input, font: &FontConfig) -> Result<Document, Error> {
     // |1| Prepare highlighter
     let ss = SyntaxSet::load_defaults_newlines();
     let syntax = ss
@@ -139,7 +139,7 @@ pub fn code_to_svg(theme: &Theme, source: &Input, font: &FontConfig) -> Result<S
 
     doc = doc.add(g);
 
-    Ok(doc.to_string())
+    Ok(doc)
 }
 
 fn add_shadow(elem: Document, id: &str, x_offset: f64, y_offset: f64, blur: f64) -> Document {
