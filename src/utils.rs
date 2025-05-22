@@ -36,7 +36,7 @@ pub fn get_canvas_size(
     }
 }
 
-pub fn get_text_info(str: &str) -> (Vec<String>, u32, u32) {
+pub fn get_text_info(str: &str) -> (u32, u32) {
     let lines: Vec<String> = str.lines().map(|s| s.to_owned()).collect();
 
     // Figure out the widest line in “characters”
@@ -45,5 +45,5 @@ pub fn get_text_info(str: &str) -> (Vec<String>, u32, u32) {
     // Total number of lines
     let line_count: u32 = lines.len() as u32;
 
-    (lines, max_chars, line_count)
+    (max_chars, line_count)
 }

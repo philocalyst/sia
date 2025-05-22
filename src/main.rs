@@ -155,14 +155,14 @@ fn parse_input(s: &str) -> Result<Input, SiaError> {
         // Convert bytes → String, replacing invalid UTF-8
         let contents = String::from_utf8_lossy(&data).into_owned();
 
-        let (lines, max_chars, line_count) = get_text_info(&contents);
+        let (max_chars, line_count) = get_text_info(&contents);
 
         Ok(Input {
             file_handler: Some(path),
             kind,
             contents: Content {
                 source: contents,
-                line_count: lines.len() as u32,
+                line_count,
                 largest_line_length: max_chars,
             },
         })
@@ -170,7 +170,7 @@ fn parse_input(s: &str) -> Result<Input, SiaError> {
         // Treat input literally as UTF-8 text
         let bytes = s.as_bytes();
         let kind = FileFormat::from_bytes(bytes);
-        let (lines, max_chars, line_count) = get_text_info(&s);
+        let (max_chars, line_count) = get_text_info(&s);
 
         Ok(Input {
             file_handler: None,
