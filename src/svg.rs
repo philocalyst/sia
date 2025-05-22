@@ -33,27 +33,6 @@ pub fn code_to_svg(theme: &Theme, source: &Input, font: &FontConfig) -> Result<D
         .map(|ln| highlighter.highlight_line(ln, &ss).unwrap())
         .collect();
 
-    // |3| Compute dimensions
-    let scale = Scale::uniform(font.font_size);
-
-    // Figure out the widest line in “characters”
-    let max_chars = lines
-        .iter()
-        .map(|regions| regions.iter().map(|&(_, txt)| txt.len()).sum::<usize>())
-        .max()
-        .unwrap_or(0) as f32;
-
-    // Were using A as a reference width char as it's a good average.
-    let advance_width = font
-        .font_family
-        .glyph('A')
-        .scaled(scale)
-        .h_metrics()
-        .advance_width;
-
-    // Calculate the total width in px
-    let width_px = max_chars * advance_width;
-
     // Get vertical metrics & compute line height
     let v_metrics = font.font_family.v_metrics(scale);
     let line_height = v_metrics.ascent - v_metrics.descent + v_metrics.line_gap;
