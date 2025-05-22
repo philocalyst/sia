@@ -352,6 +352,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "file-format"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ff8badf6e72ff15e42c9ade15d01375837173b17d10c228ab41d821082619db"
+
+[[package]]
 name = "flate2"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1068,6 +1074,7 @@ version = "0.2.0"
 dependencies = [
  "clap",
  "env_logger",
+ "file-format",
  "image",
  "imageproc",
  "lazy_static",
