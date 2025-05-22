@@ -15,6 +15,9 @@ use std::str::FromStr;
 use std::{fmt, fs, io};
 
 mod svg;
+mod utils;
+
+use utils::{get_canvas_size, get_text_info};
 
 // The latin codes I know about. Compiled very ad-hoc, so if there are any missing please let me know. I would value some good advice here
 lazy_static! {
@@ -33,6 +36,7 @@ lazy_static! {
 
 struct FontConfig<'a> {
     font_family: Font<'a>,
+    scale: Scale,
     font_name: String,
     font_size: f32,
 }
@@ -41,8 +45,15 @@ use file_format::FileFormat;
 #[derive(Clone, Debug)]
 struct Input {
     file_handler: Option<PathBuf>,
-    contents: String,
+    contents: Content,
     kind: FileFormat,
+}
+
+#[derive(Clone, Debug)]
+struct Content {
+    source: String,
+    line_count: u32,
+    largest_line_length: u32,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -143,18 +154,31 @@ fn parse_input(s: &str) -> Result<Input, SiaError> {
         let kind = FileFormat::from_bytes(&data);
         // Convert bytes → String, replacing invalid UTF-8
         let contents = String::from_utf8_lossy(&data).into_owned();
+
+        let (lines, max_chars, line_count) = get_text_info(&contents);
+
         Ok(Input {
             file_handler: Some(path),
-            contents,
             kind,
+            contents: Content {
+                source: contents,
+                line_count: lines.len() as u32,
+                largest_line_length: max_chars,
+            },
         })
     } else {
         // Treat input literally as UTF-8 text
         let bytes = s.as_bytes();
         let kind = FileFormat::from_bytes(bytes);
+        let (lines, max_chars, line_count) = get_text_info(&s);
+
         Ok(Input {
             file_handler: None,
-            contents: s.to_string(),
+            contents: Content {
+                source: s.into(),
+                line_count,
+                largest_line_length: max_chars,
+            },
             kind,
         })
     }
@@ -254,9 +278,15 @@ fn run() -> Result<(), SiaError> {
         .clone()
         .unwrap_or_else(|| PathBuf::from("output").with_extension("png"));
 
+    let max_chars = lines
+        .iter()
+        .map(|regions| regions.iter().map(|&(_, txt)| txt.len()).sum::<usize>())
+        .max()
+        .unwrap_or(0) as u32;
+
     // Build the background canvas
-    let w = cli.size.width;
-    let h = cli.size.height;
+    let (size, advance_width) = get_canvas_size(None, max_chars, lines.len(), font);
+
     let mut img = RgbaImage::from_pixel(
         w,
         h,
