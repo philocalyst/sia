@@ -41,7 +41,7 @@ pub fn code_to_svg(theme: &Theme, source: &Input, font: &FontConfig) -> Result<D
         .max()
         .unwrap_or(0) as u32;
 
-    let dimensions = get_canvas_size(None, max_chars, lines.len(), font);
+    let (size, advance_width) = get_canvas_size(None, max_chars, lines.len(), font);
 
     // |4| Extract default bg/fg from theme.settings
     let bg = theme.settings.background.unwrap();
@@ -52,8 +52,8 @@ pub fn code_to_svg(theme: &Theme, source: &Input, font: &FontConfig) -> Result<D
     // |5| Build up the SVG document
     let mut doc = Document::new()
         .set("xmlns", "http://www.w3.org/2000/svg")
-        .set("width", format!("{:.0}px", width_px))
-        .set("height", format!("{:.0}px", height_px));
+        .set("width", format!("{:.0}px", size.width))
+        .set("height", format!("{:.0}px", size.height));
 
     // Draw background rect
     let bg_rect = Rectangle::new()
