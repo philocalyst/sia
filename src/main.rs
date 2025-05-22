@@ -95,39 +95,6 @@ impl fmt::Display for Alpha {
     }
 }
 
-#[derive(Clone, Debug)]
-enum FontSize {
-    Px(f32),
-    Rel(f32), // fraction of the image's width
-}
-
-impl FromStr for FontSize {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<FontSize, String> {
-        if let Some(rest) = s.strip_suffix('%') {
-            let pct = rest
-                .parse::<f32>()
-                .map_err(|e| format!("bad percent: {}", e))?;
-            Ok(FontSize::Rel(pct / 100.0))
-        } else {
-            let px = s
-                .parse::<f32>()
-                .map_err(|e| format!("bad pixel size: {}", e))?;
-            Ok(FontSize::Px(px))
-        }
-    }
-}
-
-impl fmt::Display for FontSize {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            FontSize::Px(size) => write!(f, "{}", size),
-            FontSize::Rel(size) => write!(f, "{}", size),
-        }
-    }
-}
-
 #[derive(Debug, Error)]
 enum SiaError {
     #[error("I/O error: {0}")]
@@ -232,12 +199,12 @@ struct Cli {
     output: Option<PathBuf>,
 
     /// Image size WxH
-    #[arg(long, default_value = "1000x1000", env = "SIA_DIMENSIONS")]
-    size: Dimensions,
+    #[arg(long, env = "SIA_DIMENSIONS")]
+    size: Option<Dimensions>,
 
     /// Font size in px, or relative units (%)
-    #[arg(long, default_value = "8%", env = "SIA_FONT_SIZE")]
-    font_size: FontSize,
+    #[arg(long, env = "SIA_FONT_SIZE")]
+    font_size: f32,
 
     /// Background color
     #[arg(long, default_value = "#FFFFFF", env = "SIA_BG_COLOR", value_parser = parse_rgba8)]
@@ -302,10 +269,7 @@ fn run() -> Result<(), SiaError> {
     );
 
     // Derive the true font_size
-    let font_size: f32 = match cli.font_size {
-        FontSize::Px(size) => size,
-        FontSize::Rel(size) => w as f32 * size, // Mutating into f32, it should never be a negative value anyways.
-    };
+    let font_size: f32 = cli.font_size;
 
     // Prepare text layout
     let scale = Scale::uniform(font_size);
