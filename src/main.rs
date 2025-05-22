@@ -43,6 +43,7 @@ lazy_static! {
 struct FontConfig<'a> {
     font_family: Font<'a>,
     font_name: String,
+    font_size: f32,
 }
 
 use file_format::FileFormat;

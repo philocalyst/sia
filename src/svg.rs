@@ -39,7 +39,7 @@ pub fn write_svg<W: Write>(
         .collect();
 
     // |3| Compute dimensions
-    let scale = Scale::uniform(8.0);
+    let scale = Scale::uniform(font.font_size);
 
     // Figure out the widest line in “characters”
     let max_chars = lines
