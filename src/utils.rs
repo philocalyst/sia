@@ -1,15 +1,8 @@
-// // Figure out the widest line in “characters”
-// let max_chars = lines
-//     .iter()
-//     .map(|regions| regions.iter().map(|&(_, txt)| txt.len()).sum::<usize>())
-//     .max()
-//     .unwrap_or(0) as f32;
-
 use crate::{Dimensions, FontConfig};
 pub fn get_canvas_size(
     pref_dimensions: Option<Dimensions>,
     largest_line_length: u32,
-    num_lines: u32,
+    num_lines: usize,
     font: &FontConfig,
 ) -> Dimensions {
     if let Some(dims) = pref_dimensions {
