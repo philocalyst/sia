@@ -16,15 +16,6 @@ use std::{fmt, fs, io};
 
 mod svg;
 
-// This is the text that will be displayed when no input is provided
-const DEFAULT_PREVIEW_TEXT: &str = "\
-ABCDEFGHIJKLM
-NOPQRSTUVWXYZ
-abcdefghijklm
-nopqrSTUVWXYZ
-1234567890
-!@$%(){}[]";
-
 // The latin codes I know about. Compiled very ad-hoc, so if there are any missing please let me know. I would value some good advice here
 lazy_static! {
     static ref LATIN_CODES: Vec<&'static str> = vec![
