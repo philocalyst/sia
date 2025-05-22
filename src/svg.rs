@@ -1,5 +1,6 @@
 // Code for generating the svg file
 
+use anyhow::{Error, Result};
 use quick_xml;
 use rusttype::{Font, Point, Scale};
 use std::fs;
@@ -18,12 +19,7 @@ use syntect::util::LinesWithEndings;
 
 use crate::{FontConfig, Input, SiaError};
 
-pub fn code_to_svg<W: Write>(
-    writer: &mut W,
-    theme: &Theme,
-    source: &Input,
-    font: &FontConfig,
-) -> std::io::Result<()> {
+pub fn code_to_svg(theme: &Theme, source: &Input, font: &FontConfig) -> Result<String, Error> {
     // |1| Prepare highlighter
     let ss = SyntaxSet::load_defaults_newlines();
     let syntax = ss
@@ -143,9 +139,7 @@ pub fn code_to_svg<W: Write>(
 
     doc = doc.add(g);
 
-    // 7) Write it out
-    write!(writer, "{}", doc.to_string())?;
-    Ok(())
+    Ok(doc.to_string())
 }
 
 fn add_shadow(elem: Document, id: &str, x_offset: f64, y_offset: f64, blur: f64) -> Document {
