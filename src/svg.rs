@@ -30,7 +30,7 @@ pub fn code_to_svg(theme: &Theme, source: &Input, font: &FontConfig) -> Result<D
     let mut highlighter = HighlightLines::new(syntax, theme);
 
     // |2| Highlight each line into Vec<(Style, &str)>
-    let lines: Vec<Vec<(Style, &str)>> = LinesWithEndings::from(&source.contents)
+    let lines: Vec<Vec<(Style, &str)>> = LinesWithEndings::from(&source.contents.source)
         .map(|ln| highlighter.highlight_line(ln, &ss).unwrap())
         .collect();
 

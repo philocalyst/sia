@@ -267,10 +267,22 @@ fn run() -> Result<(), SiaError> {
     let family = get_font_name(&font_path)?;
     info!("Detected font family: {}", family);
 
+    // Derive the true font_size
+    let font_size: f32 = cli.font_size;
+
     // Read font bytes
     let font_data = fs::read(&font_path)?;
+    let scale = Scale::uniform(font_size);
+
     let font =
         Font::try_from_vec(font_data).ok_or_else(|| SiaError::FontLoad("invalid font".into()))?;
+
+    let full_font = FontConfig {
+        font_family: font,
+        scale,
+        font_name: family,
+        font_size,
+    };
 
     // Determine the output file
     let output = cli
@@ -278,18 +290,17 @@ fn run() -> Result<(), SiaError> {
         .clone()
         .unwrap_or_else(|| PathBuf::from("output").with_extension("png"));
 
-    let max_chars = lines
-        .iter()
-        .map(|regions| regions.iter().map(|&(_, txt)| txt.len()).sum::<usize>())
-        .max()
-        .unwrap_or(0) as u32;
-
     // Build the background canvas
-    let (size, advance_width) = get_canvas_size(None, max_chars, lines.len(), font);
+    let (size, advance_width) = get_canvas_size(
+        None,
+        cli.input.contents.largest_line_length,
+        cli.input.contents.line_count,
+        &full_font,
+    );
 
     let mut img = RgbaImage::from_pixel(
-        w,
-        h,
+        size.width,
+        size.height,
         Rgba([
             cli.bg_color.r,
             cli.bg_color.g,
@@ -298,17 +309,13 @@ fn run() -> Result<(), SiaError> {
         ]),
     );
 
-    // Derive the true font_size
-    let font_size: f32 = cli.font_size;
-
     // Prepare text layout
-    let scale = Scale::uniform(font_size);
-    let v_metrics = font.v_metrics(scale);
+    let v_metrics = full_font.font_family.v_metrics(scale);
     let line_height = (v_metrics.ascent - v_metrics.descent + v_metrics.line_gap).ceil();
-    let text = cli.input.contents;
+    let text = cli.input.contents.source;
     let lines: Vec<&str> = text.lines().collect();
     let block_height = line_height * lines.len() as f32;
-    let start_y = ((h as f32 - block_height) / 2.0 + v_metrics.ascent).round() as i32;
+    let start_y = ((size.height as f32 - block_height) / 2.0 + v_metrics.ascent).round() as i32;
 
     let fg_pixel = Rgba([
         cli.fg_color.r,
@@ -321,17 +328,26 @@ fn run() -> Result<(), SiaError> {
     info!("Rendering {} lines…", lines.len());
     for (i, &line) in lines.iter().enumerate() {
         // measure line width
-        let w_line: f32 = font
+        let w_line: f32 = full_font
+            .font_family
             .layout(line, scale, Point { x: 0.0, y: 0.0 })
             .fold(0.0, |acc, g| {
                 acc + g.unpositioned().h_metrics().advance_width
             });
 
         // Determine accurate drawing position
-        let x = ((w as f32 - w_line) / 2.0).round() as i32;
+        let x = ((size.width as f32 - w_line) / 2.0).round() as i32;
         let y = start_y + (i as f32 * line_height).round() as i32;
         debug!("Line {} @ ({}, {})", i, x, y);
-        draw_text_mut(&mut img, fg_pixel, x, y, scale, &font, line);
+        draw_text_mut(
+            &mut img,
+            fg_pixel,
+            x,
+            y,
+            scale,
+            &full_font.font_family,
+            line,
+        );
     }
 
     // Script‐support check
