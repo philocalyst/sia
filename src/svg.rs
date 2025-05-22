@@ -1,6 +1,7 @@
 // Code for generating the svg file
 
 use quick_xml;
+use rusttype::{Font, Point, Scale};
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
@@ -22,7 +23,7 @@ pub fn write_svg<W: Write>(
     theme: &Theme,
     syntax: &str,
     source: &str,
-    font_family: &str,
+    font_family: &Font,
 ) -> std::io::Result<()> {
     // |1| Prepare highlighter
     let ss = SyntaxSet::load_defaults_newlines();
@@ -37,16 +38,32 @@ pub fn write_svg<W: Write>(
         .map(|ln| highlighter.highlight_line(ln, &ss).unwrap())
         .collect();
 
-    // |3| Compute dimensions (approx 8px per character)
+    // |3| Compute dimensions
+    let scale = Scale::uniform(8.0);
+
+    // Figure out the widest line in “characters”
     let max_chars = lines
         .iter()
-        .map(|regions| regions.iter().map(|&(_, txt)| txt.len()).sum())
+        .map(|regions| regions.iter().map(|&(_, txt)| txt.len()).sum::<usize>())
         .max()
-        .unwrap_or(0);
-    let char_w = 8.0;
-    let width_px = max_chars as f64 * char_w;
-    let line_count = lines.len() as f64;
-    let height_px = 10.0 + 16.8 * (line_count + 1.0);
+        .unwrap_or(0) as f32;
+
+    // Were using A as a reference width as it's a good average.
+    let advance_width = font_family
+        .glyph('A')
+        .scaled(scale)
+        .h_metrics()
+        .advance_width;
+
+    // Calculate the total width in px
+    let width_px = max_chars * advance_width;
+
+    // Get vertical metrics & compute line height
+    let v_metrics = font_family.v_metrics(scale);
+    let line_height = v_metrics.ascent - v_metrics.descent + v_metrics.line_gap;
+
+    // Compute total height in px (and add one extra line’s worth of padding)
+    let height_px = line_height * (lines.len() as f32 + 1.0);
 
     // |4| Extract default bg/fg from theme.settings
     let bg = theme.settings.background.unwrap();
@@ -118,7 +135,7 @@ pub fn write_svg<W: Write>(
             }
 
             // Advance x by chars * char_w
-            x_offset += segment.chars().count() as f64 * char_w;
+            x_offset += segment.chars().count() as f32 * char_w.advance_width;
         }
 
         g = g.add(text);
