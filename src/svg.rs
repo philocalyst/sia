@@ -65,7 +65,7 @@ pub fn code_to_svg(theme: &Theme, source: &Input, font: &FontConfig) -> Result<D
     // a semantic <g> for all text
     let mut g = Group::new()
         .set("font-family", font.font_name.clone())
-        .set("font-size", "14px")
+        .set("font-size", font.font_size)
         .set("fill", fg_hex.clone());
 
     // |6| Just one <text> element per line
