@@ -81,14 +81,7 @@ pub fn code_to_svg(theme: &Theme, source: &Input, font: &FontConfig) -> Result<D
         for &(ref style, segment) in regions {
             // If style provided holds no background or foreground, emit unstyled text.
             let is_default = style.foreground == fg && style.font_style.is_empty();
-            let esc = match segment {
-                "<" => "&lt;",
-                ">" => "&gt;",
-                "\"" => "&quot;",
-                " " => "&#160;",
-                "	" => "&#160;&#160;&#160;&#160;",
-                _other => segment,
-            };
+            let esc = segment.replace('\t', "    ");
 
             if is_default {
                 text = text.add(svg::node::Text::new(esc));
