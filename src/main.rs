@@ -6,6 +6,7 @@ use lazy_static::lazy_static;
 use log::{debug, error, info, warn};
 use rgb::RGBA8;
 use rusttype::{Font, Point, Scale};
+use svg::code_to_svg;
 use thiserror::Error;
 
 // Standard library imports
@@ -300,13 +301,6 @@ fn run() -> Result<(), SiaError> {
         &full_font,
     );
 
-    use resvg;
-    use usvg;
-
-    let tree =
-        usvg::Tree::from_str(&result.unwrap().to_string(), &usvg::Options::default()).unwrap();
-
-    resvg::render(&tree);
     // Build the background canvas
     let (size, advance_width) = get_canvas_size(
         None,
@@ -314,6 +308,24 @@ fn run() -> Result<(), SiaError> {
         cli.input.contents.line_count,
         &full_font,
     );
+
+    use resvg;
+    use tiny_skia;
+    use tiny_skia_path;
+    use usvg;
+
+    let tree =
+        usvg::Tree::from_str(&result.unwrap().to_string(), &usvg::Options::default()).unwrap();
+
+    let mut map = tiny_skia::Pixmap::new(size.width, size.height).unwrap();
+
+    resvg::render(
+        &tree,
+        tiny_skia_path::Transform::default(),
+        &mut map.as_mut(),
+    );
+
+    map.save_png(&output).unwrap();
 
     // Script‐support check
     match detect_latin_support(&font_path) {
