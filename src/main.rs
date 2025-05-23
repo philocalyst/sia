@@ -299,7 +299,9 @@ fn run() -> Result<(), SiaError> {
         available_themes.themes.get("base16-ocean.dark").unwrap(),
         &cli.input,
         &full_font,
-    );
+    )
+    .unwrap()
+    .to_string();
 
     // Build the background canvas
     let (size, advance_width) = get_canvas_size(
@@ -314,8 +316,9 @@ fn run() -> Result<(), SiaError> {
     use tiny_skia_path;
     use usvg;
 
-    let tree =
-        usvg::Tree::from_str(&result.unwrap().to_string(), &usvg::Options::default()).unwrap();
+    let tree = usvg::Tree::from_str(&result, &usvg::Options::default()).unwrap();
+
+    println!("{tree:?}");
 
     let mut map = tiny_skia::Pixmap::new(size.width, size.height).unwrap();
 
