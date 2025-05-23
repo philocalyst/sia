@@ -24,7 +24,7 @@ pub fn code_to_svg(theme: &Theme, source: &Input, font: &FontConfig) -> Result<D
     // |1| Prepare highlighter
     let ss = SyntaxSet::load_defaults_newlines();
     let syntax = ss
-        .find_syntax_by_token(source.kind.extension())
+        .find_syntax_by_token(&source.kind)
         .unwrap_or_else(|| ss.find_syntax_plain_text());
 
     let mut highlighter = HighlightLines::new(syntax, theme);

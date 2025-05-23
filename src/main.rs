@@ -48,7 +48,7 @@ use file_format::FileFormat;
 struct Input {
     file_handler: Option<PathBuf>,
     contents: Content,
-    kind: FileFormat,
+    kind: String,
 }
 
 #[derive(Clone, Debug)]
@@ -150,8 +150,13 @@ impl From<String> for SiaError {
 fn parse_input(s: &str) -> Result<Input, SiaError> {
     let path = PathBuf::from(s);
     if path.exists() && path.is_file() {
-        // Guess the file format
-        let kind = FileFormat::from_file(&path)?;
+        let kind: String;
+        // If there is no extension on the path, try to guess the format.
+        if let Some(ext) = path.extension() {
+            kind = ext.to_string_lossy().into();
+        } else {
+            kind = FileFormat::from_file(&path)?.extension().to_string();
+        }
         // Convert bytes → String, replacing invalid UTF-8
         let contents = fs::read_to_string(&path)?;
 
@@ -169,7 +174,7 @@ fn parse_input(s: &str) -> Result<Input, SiaError> {
     } else {
         // Treat input literally as UTF-8 text
         let bytes = s.as_bytes();
-        let kind = FileFormat::from_bytes(bytes);
+        let kind = FileFormat::from_bytes(bytes).extension().to_string();
         let (max_chars, line_count) = get_text_info(&s);
 
         Ok(Input {
