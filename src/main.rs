@@ -293,6 +293,13 @@ fn run() -> Result<(), SiaError> {
         .clone()
         .unwrap_or_else(|| PathBuf::from("output").with_extension("png"));
 
+    let available_themes = syntect::highlighting::ThemeSet::load_defaults();
+    let result = code_to_svg(
+        available_themes.themes.get("base16-ocean.dark").unwrap(),
+        &cli.input,
+        &full_font,
+    );
+
     // Build the background canvas
     let (size, advance_width) = get_canvas_size(
         None,
