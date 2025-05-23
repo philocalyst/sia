@@ -300,6 +300,13 @@ fn run() -> Result<(), SiaError> {
         &full_font,
     );
 
+    use resvg;
+    use usvg;
+
+    let tree =
+        usvg::Tree::from_str(&result.unwrap().to_string(), &usvg::Options::default()).unwrap();
+
+    resvg::render(&tree);
     // Build the background canvas
     let (size, advance_width) = get_canvas_size(
         None,
