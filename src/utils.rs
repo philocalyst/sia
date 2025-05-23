@@ -7,7 +7,7 @@ pub fn get_canvas_size(
 ) -> (Dimensions, f32) {
     // Were using A as a reference width char as it's a good average.
     let advance_width = font
-        .font_family
+        .font
         .glyph('A')
         .scaled(font.scale)
         .h_metrics()
@@ -20,8 +20,8 @@ pub fn get_canvas_size(
         let width_px = largest_line_length * advance_width as u32;
 
         // Get vertical metrics & compute line height
-        let v_metrics = font.font_family.v_metrics(font.scale);
-        let line_height = v_metrics.ascent - v_metrics.descent + v_metrics.line_gap;
+        let v_metrics = font.font.v_metrics(font.scale);
+        let line_height = (v_metrics.ascent - v_metrics.descent + v_metrics.line_gap) * 1.2;
 
         // Compute total height in px (and add one extra line’s worth of padding)
         let height_px = line_height as u32 * (num_lines as u32 + 1);
