@@ -1134,6 +1134,7 @@ dependencies = [
  "syntect",
  "thiserror",
  "tiny-skia",
+ "tiny-skia-path",
  "usvg",
 ]
 
