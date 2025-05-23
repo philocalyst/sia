@@ -149,12 +149,10 @@ impl From<String> for SiaError {
 fn parse_input(s: &str) -> Result<Input, SiaError> {
     let path = PathBuf::from(s);
     if path.exists() && path.is_file() {
-        // Read the full file as bytes
-        let data = fs::read(&path).map_err(|e| SiaError::Io(e))?;
         // Guess the file format
-        let kind = FileFormat::from_bytes(&data);
+        let kind = FileFormat::from_file(&path)?;
         // Convert bytes → String, replacing invalid UTF-8
-        let contents = String::from_utf8_lossy(&data).into_owned();
+        let contents = fs::read_to_string(&path)?;
 
         let (max_chars, line_count) = get_text_info(&contents);
 
