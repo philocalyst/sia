@@ -303,48 +303,6 @@ fn run() -> Result<(), SiaError> {
         &full_font,
     );
 
-    let mut img = RgbaImage::from_pixel(
-        size.width,
-        size.height,
-        Rgba([
-            cli.bg_color.r,
-            cli.bg_color.g,
-            cli.bg_color.b,
-            cli.bg_alpha.to_u8(),
-        ]),
-    );
-
-    // Prepare text layout
-    let text = cli.input.contents.source;
-    let lines: Vec<&str> = text.lines().collect();
-    let block_height = line_height * lines.len() as f32;
-    let start_y = ((size.height as f32 - block_height) / 2.0 + v_metrics.ascent).round() as i32;
-
-    let fg_pixel = Rgba([
-        cli.fg_color.r,
-        cli.fg_color.g,
-        cli.fg_color.b,
-        cli.fg_alpha.to_u8(),
-    ]);
-
-    // Rendering
-    info!("Rendering {} lines…", lines.len());
-    for (i, &line) in lines.iter().enumerate() {
-        // measure line width
-        let w_line: f32 = full_font
-            .font
-            .layout(line, scale, Point { x: 0.0, y: 0.0 })
-            .fold(0.0, |acc, g| {
-                acc + g.unpositioned().h_metrics().advance_width
-            });
-
-        // Determine accurate drawing position
-        let x = ((size.width as f32 - w_line) / 2.0).round() as i32;
-        let y = start_y + (i as f32 * line_height).round() as i32;
-        debug!("Line {} @ ({}, {})", i, x, y);
-        draw_text_mut(&mut img, fg_pixel, x, y, scale, &full_font.font, line);
-    }
-
     // Script‐support check
     match detect_latin_support(&font_path) {
         Ok(false) => warn!("Font has not declared Latin‐script support."),
@@ -353,7 +311,6 @@ fn run() -> Result<(), SiaError> {
     }
 
     info!("Saving to {:?}", output);
-    img.save(&output)?;
 
     info!("Done.");
     Ok(())
