@@ -13,11 +13,9 @@ lazy_static! {
     ];
 }
 
-struct FontConfig<'a> {
-    font: Font<'a>,
-    scale: Scale,
+struct FontConfig {
+    font: Font,
     line_height: f32,
-    font_name: String,
     font_size: f32,
 }
 
