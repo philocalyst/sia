@@ -51,7 +51,8 @@ pub fn code_to_svg(
         .set("fill", fg_hex.clone());
 
     // |6| Just one <text> element per line
-    for (i, regions) in lines.iter().enumerate() {
+    let mut max_width = 0;
+    for (i, line) in lines.iter().enumerate() {
         // y in “em”
         let y_em = (i + 1) as f64 * 1.2;
         let mut text = Text::new("")
@@ -90,6 +91,14 @@ pub fn code_to_svg(
             // Advance x by chars * char_w
             x_offset += segment.chars().count() as f32 * advance_width;
         }
+        let x = font
+            .font
+            .layout(&segments, font.scale, Point { x: 1.0, y: 0.0 })
+            .last()
+            .unwrap()
+            .position()
+            .x;
+        max_width = max_width.max(x as u32);
 
         g = g.add(text);
     }
