@@ -60,12 +60,13 @@ pub fn code_to_svg(
             .set("y", format!("{:.2}em", y_em))
             .set("xml:space", "preserve");
 
-        let mut x_offset = 0.0;
-        for &(ref style, segment) in regions {
+        let mut segments = String::new();
+        for &(ref style, segment) in line {
             // If style provided holds no background or foreground, emit unstyled text.
             let is_default = style.foreground == fg && style.font_style.is_empty();
             let esc = segment.replace('\t', "    ");
 
+            let mut t = TSpan::new("").set("dx", format!("{}", 0));
             if is_default {
                 text = text.add(svg::node::Text::new(esc));
             } else {
