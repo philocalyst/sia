@@ -4,26 +4,20 @@ use crate::{Dimensions, FontConfig};
         .h_metrics()
         .advance_width;
 
+pub fn get_canvas_height(
+    pref_dimensions: Option<Dimensions>,
+    num_lines: usize,
+    font: &FontConfig,
+) -> f32 {
     if let Some(dims) = pref_dimensions {
-        return (dims, advance_width);
+        dims.height as f32
     } else {
-        // Calculate the total width in px
-        let width_px = largest_line_length * advance_width as u32;
-
         // Get vertical metrics & compute line height
         let v_metrics = font.font.v_metrics(font.scale);
         let line_height = (v_metrics.ascent - v_metrics.descent + v_metrics.line_gap) * 1.2;
 
         // Compute total height in px (and add one extra line’s worth of padding)
-        let height_px = line_height as u32 * (num_lines as u32 + 1);
-
-        (
-            Dimensions {
-                width: width_px,
-                height: height_px,
-            },
-            advance_width,
-        )
+        line_height * (num_lines as f32 + 1.0)
     }
 }
 
