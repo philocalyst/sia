@@ -19,12 +19,11 @@ struct FontConfig {
     font_size: f32,
 }
 
-use file_format::FileFormat;
 #[derive(Clone, Debug)]
 struct Input {
     file_handler: Option<PathBuf>,
     contents: Content,
-    kind: String,
+    ext: String,
 }
 
 #[derive(Clone, Debug)]
