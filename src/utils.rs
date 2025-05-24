@@ -1,14 +1,5 @@
 use crate::{Dimensions, FontConfig};
-pub fn get_canvas_size(
-    pref_dimensions: Option<Dimensions>,
-    largest_line_length: u32,
-    num_lines: u32,
-    font: &FontConfig,
-) -> (Dimensions, f32) {
-    // Were using A as a reference width char as it's a good average.
-    let advance_width = font
-        .font
-        .glyph('A')
+
         .scaled(font.scale)
         .h_metrics()
         .advance_width;

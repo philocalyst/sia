@@ -18,7 +18,7 @@ use std::{fmt, fs, io};
 mod svg;
 mod utils;
 
-use utils::{get_canvas_size, get_text_info};
+use utils::get_text_info;
 
 // The latin codes I know about. Compiled very ad-hoc, so if there are any missing please let me know. I would value some good advice here
 lazy_static! {
@@ -308,13 +308,6 @@ fn run() -> Result<(), SiaError> {
     .unwrap()
     .to_string();
 
-    // Build the background canvas
-    let (size, advance_width) = get_canvas_size(
-        None,
-        cli.input.contents.largest_line_length,
-        cli.input.contents.line_count,
-        &full_font,
-    );
 
     use resvg;
     use tiny_skia;
