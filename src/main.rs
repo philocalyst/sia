@@ -158,3 +158,12 @@ fn main() {
 }
 
 fn run() -> Result<(), SiaError> {}
+    let cli = Cli::parse();
+
+    // Get the font database early to get available fonts
+    let mut tree_options = usvg::Options::default();
+    tree_options.fontdb_mut().load_system_fonts(); // System fonts should always be loaded? Maybe this is needless
+    tree_options.fontdb_mut().load_font_file(cli.font_path);
+
+    // The font name should just be the final component
+    let font_name = cli.font_path.file_name().unwrap().to_string_lossy();
