@@ -1,8 +1,12 @@
 use crate::{Dimensions, FontConfig};
 
+pub(crate) fn get_char_width(c: char, font: &FontConfig) -> f32 {
+    font.font
+        .glyph(c)
         .scaled(font.scale)
         .h_metrics()
-        .advance_width;
+        .advance_width
+}
 
 pub fn get_canvas_height(
     pref_dimensions: Option<Dimensions>,
