@@ -75,42 +75,36 @@ enum SiaError {
 }
 
 fn parse_input(s: &str) -> Result<Input, SiaError> {
+    // Convert to path
     let path = PathBuf::from(s);
+
+    // If it is a real path, use that information
     if path.exists() && path.is_file() {
-        let kind: String;
-        // If there is no extension on the path, try to guess the format.
+        let ext: String;
+        // The extension is the valuable piece of info here. No ext, we need to guess.
         if let Some(ext) = path.extension() {
-            kind = ext.to_string_lossy().into();
+            ext = ext.to_string_lossy().into();
         } else {
-            kind = FileFormat::from_file(&path)?.extension().to_string();
+            ext = FileFormat::from_file(&path)?.extension().to_string();
         }
-        // Convert bytes → String, replacing invalid UTF-8
+
         let contents = fs::read_to_string(&path)?;
 
-        let (max_chars, line_count) = get_text_info(&contents);
         Ok(Input {
             file_handler: Some(path),
-            kind,
-            contents: Content {
-                source: contents,
-                line_count,
-                largest_line_length: max_chars,
-            },
+            ext,
+            contents,
         })
     } else {
         // Treat input literally as UTF-8 text
+        // Can't help if it's not...
         let bytes = s.as_bytes();
-        let kind = FileFormat::from_bytes(bytes).extension().to_string();
-        let (max_chars, line_count) = get_text_info(&s);
+        let ext = FileFormat::from_bytes(bytes).extension().to_string();
 
         Ok(Input {
             file_handler: None,
-            contents: Content {
-                source: s.into(),
-                line_count,
-                largest_line_length: max_chars,
-            },
-            kind,
+            contents: s.into(),
+            ext,
         })
     }
 }
