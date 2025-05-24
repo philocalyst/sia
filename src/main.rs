@@ -116,7 +116,7 @@ struct Cli {
     #[arg(short = 'F', long, env = "SIA_FONT")]
     font_path: PathBuf,
 
-    /// Output image file (default: <font>.png)
+    /// Output (image?) file (default: output.png)
     #[arg(short = 'O', long, env = "SIA_OUT_FILE")]
     output: Option<PathBuf>,
 
@@ -124,7 +124,7 @@ struct Cli {
     #[arg(long, env = "SIA_DIMENSIONS")]
     size: Option<Dimensions>,
 
-    /// Font size in px, or relative units (%)
+    /// Font size in px
     #[arg(long, env = "SIA_FONT_SIZE")]
     font_size: f32,
 
