@@ -53,19 +53,6 @@ pub fn code_to_svg(
     let bg_hex = format!("#{:02X}{:02X}{:02X}", bg.r, bg.g, bg.b);
     let fg_hex = format!("#{:02X}{:02X}{:02X}", fg.r, fg.g, fg.b);
 
-    // |5| Build up the SVG document
-    let mut doc = Document::new()
-        .set("xmlns", "http://www.w3.org/2000/svg")
-        .set("width", format!("{:.0}px", size.width))
-        .set("height", format!("{:.0}px", size.height));
-
-    // Draw background rect
-    let bg_rect = Rectangle::new()
-        .set("width", "100%")
-        .set("height", "100%")
-        .set("fill", bg_hex.clone());
-    doc = doc.add(bg_rect);
-
     // a semantic <g> for all text
     let mut g = Group::new()
         .set("font-family", font.font_name.clone())
@@ -115,6 +102,21 @@ pub fn code_to_svg(
 
         g = g.add(text);
     }
+
+    let height = get_canvas_height(None, lines.len(), font);
+
+    // |5| Build up the SVG document
+    let mut doc = Document::new()
+        .set("xmlns", "http://www.w3.org/2000/svg")
+        .set("width", format!("{:.0}px", max_width))
+        .set("height", format!("{:.0}px", height));
+
+    // Draw background rect
+    let bg_rect = Rectangle::new()
+        .set("width", "100%")
+        .set("height", "100%")
+        .set("fill", bg_hex.clone());
+    doc = doc.add(bg_rect);
 
     doc = doc.add(g);
 
