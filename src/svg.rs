@@ -68,10 +68,11 @@ pub fn code_to_svg(
 
             let mut t = TSpan::new("").set("dx", format!("{}", 0));
             if is_default {
-                text = text.add(svg::node::Text::new(esc));
+                t = t.add(svg::node::Text::new(esc));
+                text = text.add(t);
             } else {
                 // Otherwise wrap in <tspan> with only the differing attrs
-                let mut t = TSpan::new("").set("x", format!("{:.2}px", x_offset)).set(
+                t = t.set(
                     "fill",
                     format!(
                         "#{:02X}{:02X}{:02X}", // Ensure that each RGB value converts accurately to a HEX
@@ -121,7 +122,8 @@ pub fn code_to_svg(
 
     doc = doc.add(g);
 
-    Ok(doc)
+    let result = (doc, max_width, height as u32);
+    Ok(result)
 }
 
 fn add_shadow(elem: Document, id: &str, x_offset: f64, y_offset: f64, blur: f64) -> Document {
