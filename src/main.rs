@@ -22,15 +22,8 @@ struct FontConfig {
 #[derive(Clone, Debug)]
 struct Input {
     file_handler: Option<PathBuf>,
-    contents: Content,
+    contents: String,
     ext: String,
-}
-
-#[derive(Clone, Debug)]
-struct Content {
-    source: String,
-    line_count: u32,
-    largest_line_length: u32,
 }
 
 #[derive(Debug, Clone, Copy)]
