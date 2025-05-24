@@ -314,7 +314,8 @@ fn run() -> Result<(), SiaError> {
     use tiny_skia_path;
     use usvg;
 
-    let tree = usvg::Tree::from_str(&result, &usvg::Options::default()).unwrap();
+    let mut tree_options = usvg::Options::default();
+    tree_options.fontdb_mut().load_system_fonts();
 
     println!("{tree:?}");
 
