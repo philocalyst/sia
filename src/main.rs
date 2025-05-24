@@ -300,13 +300,13 @@ fn run() -> Result<(), SiaError> {
         .unwrap_or_else(|| PathBuf::from("output").with_extension("png"));
 
     let available_themes = syntect::highlighting::ThemeSet::load_defaults();
-    let result = code_to_svg(
+    let (doc, width, height) = code_to_svg(
         available_themes.themes.get("base16-ocean.dark").unwrap(),
         &cli.input,
         &full_font,
     )
-    .unwrap()
-    .to_string();
+    .unwrap();
+    let svg = doc.to_string();
 
 
     use resvg;

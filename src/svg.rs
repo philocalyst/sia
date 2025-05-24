@@ -17,10 +17,14 @@ use syntect::highlighting::{Style, Theme, ThemeSet};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
-use crate::get_canvas_size;
+use crate::utils::{get_canvas_height, get_char_width};
 use crate::{Dimensions, FontConfig, Input, SiaError};
 
-pub fn code_to_svg(theme: &Theme, source: &Input, font: &FontConfig) -> Result<Document, Error> {
+pub fn code_to_svg(
+    theme: &Theme,
+    source: &Input,
+    font: &FontConfig,
+) -> Result<(Document, u32, u32), Error> {
     // |1| Prepare highlighter
     let ss = SyntaxSet::load_defaults_newlines();
     let syntax = ss
