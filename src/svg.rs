@@ -38,15 +38,6 @@ pub fn code_to_svg(
         .map(|ln| highlighter.highlight_line(ln, &ss).unwrap())
         .collect();
 
-    // // Figure out the widest line in “characters”
-    let max_chars = lines
-        .iter()
-        .map(|regions| regions.iter().map(|&(_, txt)| txt.len()).sum::<usize>())
-        .max()
-        .unwrap_or(0) as u32;
-
-    let (size, advance_width) = get_canvas_size(None, max_chars, lines.len(), font);
-
     // |4| Extract default bg/fg from theme.settings
     let bg = theme.settings.background.unwrap();
     let fg = theme.settings.foreground.unwrap();
