@@ -308,6 +308,7 @@ fn run() -> Result<(), SiaError> {
     .unwrap();
     let svg = doc.to_string();
 
+    let svg = svg.replace("\n", "");
 
     use resvg;
     use tiny_skia;
@@ -317,9 +318,14 @@ fn run() -> Result<(), SiaError> {
     let mut tree_options = usvg::Options::default();
     tree_options.fontdb_mut().load_system_fonts();
 
-    println!("{tree:?}");
+    tree_options.dpi = 300.0;
+    tree_options.font_family = full_font.font_name;
+    tree_options.font_size = cli.font_size;
+    let tree = usvg::Tree::from_str(&svg, &tree_options).unwrap();
 
-    let mut map = tiny_skia::Pixmap::new(size.width, size.height).unwrap();
+    println!("AAA {svg}");
+
+    let mut map = tiny_skia::Pixmap::new(width, height).unwrap();
 
     resvg::render(
         &tree,

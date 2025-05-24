@@ -90,8 +90,6 @@ pub fn code_to_svg(
                 text = text.add(t);
             }
 
-            // Advance x by chars * char_w
-            x_offset += segment.chars().count() as f32 * advance_width;
         }
         let x = font
             .font
