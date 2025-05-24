@@ -1,25 +1,3 @@
-// External crates
-use clap::Parser;
-use image::{ImageError, Rgba, RgbaImage};
-use imageproc::drawing::draw_text_mut;
-use lazy_static::lazy_static;
-use log::{debug, error, info, warn};
-use rgb::RGBA8;
-use rusttype::{Font, Point, Scale};
-use svg::code_to_svg;
-use thiserror::Error;
-
-// Standard library imports
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use std::str::FromStr;
-use std::{fmt, fs, io};
-
-mod svg;
-mod utils;
-
-use utils::get_text_info;
-
 // The latin codes I know about. Compiled very ad-hoc, so if there are any missing please let me know. I would value some good advice here
 lazy_static! {
     static ref LATIN_CODES: Vec<&'static str> = vec![
@@ -64,47 +42,12 @@ struct Dimensions {
     height: u32,
 }
 
-impl FromStr for Dimensions {
-    type Err = SiaError;
-    fn from_str(s: &str) -> Result<Self, SiaError> {
-        let mut parts = s.split('x');
-        let w = parts
-            .next()
-            .and_then(|p| p.parse().ok())
-            .ok_or_else(|| SiaError::InvalidConfig("size".into()))?;
-        let h = parts
-            .next()
-            .and_then(|p| p.parse().ok())
-            .ok_or_else(|| SiaError::InvalidConfig("size".into()))?;
-        Ok(Dimensions {
-            width: w,
-            height: h,
-        })
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 struct Alpha(f32);
 
 impl Alpha {
     fn to_u8(self) -> u8 {
         (self.0.clamp(0.0, 1.0) * 255.0).round() as u8
-    }
-}
-
-impl FromStr for Alpha {
-    type Err = SiaError;
-    fn from_str(s: &str) -> Result<Self, SiaError> {
-        let v: f32 = s
-            .parse()
-            .map_err(|_| SiaError::InvalidConfig("alpha".into()))?;
-        Ok(Alpha(v.clamp(0.0, 1.0)))
-    }
-}
-
-impl fmt::Display for Alpha {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
     }
 }
 
@@ -141,12 +84,6 @@ enum SiaError {
     Message(String),
 }
 
-impl From<String> for SiaError {
-    fn from(s: String) -> Self {
-        SiaError::Message(s)
-    }
-}
-
 fn parse_input(s: &str) -> Result<Input, SiaError> {
     let path = PathBuf::from(s);
     if path.exists() && path.is_file() {
@@ -161,7 +98,6 @@ fn parse_input(s: &str) -> Result<Input, SiaError> {
         let contents = fs::read_to_string(&path)?;
 
         let (max_chars, line_count) = get_text_info(&contents);
-
         Ok(Input {
             file_handler: Some(path),
             kind,
@@ -186,33 +122,6 @@ fn parse_input(s: &str) -> Result<Input, SiaError> {
             },
             kind,
         })
-    }
-}
-
-fn parse_rgba8(hex_code: &str) -> Result<RGBA8, SiaError> {
-    // strip leading ‘#’ if any
-    let hex = hex_code.trim().strip_prefix('#').unwrap_or(hex_code);
-
-    match hex.len() {
-        6 => {
-            // RRGGBB => alpha = 0xFF
-            let r = u8::from_str_radix(&hex[0..2], 16).map_err(|e| e.to_string())?;
-            let g = u8::from_str_radix(&hex[2..4], 16).map_err(|e| e.to_string())?;
-            let b = u8::from_str_radix(&hex[4..6], 16).map_err(|e| e.to_string())?;
-            Ok(RGBA8::new(r, g, b, u8::MAX))
-        }
-        8 => {
-            // RRGGBBAA
-            let r = u8::from_str_radix(&hex[0..2], 16).map_err(|e| e.to_string())?;
-            let g = u8::from_str_radix(&hex[2..4], 16).map_err(|e| e.to_string())?;
-            let b = u8::from_str_radix(&hex[4..6], 16).map_err(|e| e.to_string())?;
-            let a = u8::from_str_radix(&hex[6..8], 16).map_err(|e| e.to_string())?;
-            Ok(RGBA8::new(r, g, b, a))
-        }
-        _ => Err(SiaError::Parse(format!(
-            "invalid color `{}`, expected `#RRGGBB` or `#RRGGBBAA`",
-            hex_code
-        ))),
     }
 }
 
@@ -264,192 +173,4 @@ fn main() {
     }
 }
 
-fn run() -> Result<(), SiaError> {
-    let cli = Cli::parse();
-    let font_path = cli.font_path;
-
-    // Detect font family name
-    let family = get_font_name(&font_path)?;
-    info!("Detected font family: {}", family);
-
-    // Derive the true font_size
-    let font_size: f32 = cli.font_size;
-
-    // Read font bytes
-    let font_data = fs::read(&font_path)?;
-    let scale = Scale::uniform(font_size);
-
-    let font =
-        Font::try_from_vec(font_data).ok_or_else(|| SiaError::FontLoad("invalid font".into()))?;
-
-    let v_metrics = font.v_metrics(scale);
-    let line_height = (v_metrics.ascent - v_metrics.descent + v_metrics.line_gap).ceil();
-
-    let full_font = FontConfig {
-        font,
-        scale,
-        line_height,
-        font_name: family,
-        font_size,
-    };
-
-    // Determine the output file
-    let output = cli
-        .output
-        .clone()
-        .unwrap_or_else(|| PathBuf::from("output").with_extension("png"));
-
-    let available_themes = syntect::highlighting::ThemeSet::load_defaults();
-    let (doc, width, height) = code_to_svg(
-        available_themes.themes.get("base16-ocean.dark").unwrap(),
-        &cli.input,
-        &full_font,
-    )
-    .unwrap();
-    let svg = doc.to_string();
-
-    let svg = svg.replace("\n", "");
-
-    use resvg;
-    use tiny_skia;
-    use tiny_skia_path;
-    use usvg;
-
-    let mut tree_options = usvg::Options::default();
-    tree_options.fontdb_mut().load_system_fonts();
-
-    tree_options.dpi = 300.0;
-    tree_options.font_family = full_font.font_name;
-    tree_options.font_size = cli.font_size;
-    let tree = usvg::Tree::from_str(&svg, &tree_options).unwrap();
-
-    println!("AAA {svg}");
-
-    let mut map = tiny_skia::Pixmap::new(width, height).unwrap();
-
-    resvg::render(
-        &tree,
-        tiny_skia_path::Transform::default(),
-        &mut map.as_mut(),
-    );
-
-    map.save_png(&output).unwrap();
-
-    // Script‐support check
-    match detect_latin_support(&font_path) {
-        Ok(false) => warn!("Font has not declared Latin‐script support."),
-        Err(e) => warn!("Could not detect script support: {}", e),
-        _ => {}
-    }
-
-    info!("Saving to {:?}", output);
-
-    info!("Done.");
-    Ok(())
-}
-
-#[cfg(unix)]
-fn get_font_name(path: &Path) -> Result<String, SiaError> {
-    let p = path
-        .to_str()
-        .ok_or_else(|| SiaError::FontNameDetect("invalid path".into()))?;
-    let out = Command::new("fc-scan")
-        .args(["--format", "%{family}", p])
-        .output()
-        .map_err(|e| SiaError::FontNameDetect(e.to_string()))?;
-    if !out.status.success() {
-        return Err(SiaError::FontNameDetect(format!(
-            "fc-scan failed: {:?}",
-            out.status
-        )));
-    }
-    let fam = String::from_utf8_lossy(&out.stdout).trim().to_string();
-    if fam.is_empty() {
-        return Ok("NA".into());
-    }
-    // pick first segment before ',' or space
-    let short = if fam.contains(',') {
-        fam.split(',').next().unwrap().trim()
-    } else if fam.contains(' ') {
-        fam.split_ascii_whitespace().next().unwrap()
-    } else {
-        // first proper noun: uppercase + following lowercase
-        let chars = fam.char_indices();
-        let mut result = None;
-        for (i, c) in chars {
-            if c.is_uppercase() {
-                let mut end = i + c.len_utf8();
-                for (j, d) in fam[end..].char_indices() {
-                    if d.is_uppercase() {
-                        break;
-                    }
-                    end = i + j + d.len_utf8();
-                }
-                result = Some(&fam[i..end]);
-                break;
-            }
-        }
-        result.unwrap_or(&fam)
-    };
-    Ok(short.to_string())
-}
-
-#[cfg(windows)]
-fn get_font_name(path: &Path) -> Result<String, SiaError> {
-    let p = path
-        .to_str()
-        .ok_or_else(|| SiaError::FontNameDetect("invalid path".into()))?;
-    let cmd = format!(
-        "[System.Drawing.FontFamily]::Families \
-         | Where-Object {{ $_.GetName(0) -eq (\"{}\") }} \
-         | Select-Object -ExpandProperty Name",
-        p
-    );
-    let out = Command::new("powershell")
-        .args(&["-Command", &cmd])
-        .output()
-        .map_err(|e| SiaError::FontNameDetect(e.to_string()))?;
-    if !out.status.success() {
-        return Err(SiaError::FontNameDetect(format!(
-            "powershell failed: {:?}",
-            out.status
-        )));
-    }
-    let name = String::from_utf8_lossy(&out.stdout).trim().to_string();
-    Ok(if name.is_empty() { "NA".into() } else { name })
-}
-
-#[cfg(not(any(unix, windows)))]
-fn get_font_name(_: &Path) -> Result<String, SiaError> {
-    Ok("NA".into()) // I don't know what to do here, looking for advice. Would this be BSD-based systems?
-}
-
-#[cfg(unix)]
-fn detect_latin_support(path: &Path) -> Result<bool, SiaError> {
-    let out = Command::new("fc-scan")
-        .args([
-            "--format",
-            "%{lang}",
-            path.to_str()
-                .ok_or_else(|| SiaError::LatinDetect("invalid font path".into()))?,
-        ])
-        .output()
-        .map_err(|e| SiaError::LatinDetect(e.to_string()))?;
-    let langs = String::from_utf8_lossy(&out.stdout);
-    for code in langs
-        .split(|c: char| c == ',' || c == '|' || c.is_whitespace())
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-    {
-        if LATIN_CODES.contains(&code) {
-            return Ok(true);
-        }
-    }
-    Ok(false)
-}
-
-#[cfg(windows)]
-fn detect_latin_support(_path: &Path) -> Result<bool, SiaError> {
-    // skipping on Windows
-    Ok(true)
-}
+fn run() -> Result<(), SiaError> {}

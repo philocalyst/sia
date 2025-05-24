@@ -1,6 +1,7 @@
 // Code for generating the svg file
 
 use anyhow::{Error, Result};
+use core::panic;
 use quick_xml;
 use rusttype::{Font, Point, Scale};
 use std::fs;
@@ -46,62 +47,11 @@ pub fn code_to_svg(
 
     // a semantic <g> for all text
     let mut g = Group::new()
-        .set("font-family", font.font_name.clone())
+        .set("font-family", "Geneva")
         .set("font-size", font.font_size)
         .set("fill", fg_hex.clone());
 
     // |6| Just one <text> element per line
-    let mut max_width = 0;
-    for (i, line) in lines.iter().enumerate() {
-        // y in “em”
-        let y_em = (i + 1) as f64 * 1.2;
-        let mut text = Text::new("")
-            .set("x", 0)
-            .set("y", format!("{:.2}em", y_em))
-            .set("xml:space", "preserve");
-
-        let mut segments = String::new();
-        for &(ref style, segment) in line {
-            // If style provided holds no background or foreground, emit unstyled text.
-            let is_default = style.foreground == fg && style.font_style.is_empty();
-            let esc = segment.replace('\t', "    ");
-
-            let mut t = TSpan::new("").set("dx", format!("{}", 0));
-            if is_default {
-                t = t.add(svg::node::Text::new(esc));
-                text = text.add(t);
-            } else {
-                // Otherwise wrap in <tspan> with only the differing attrs
-                t = t.set(
-                    "fill",
-                    format!(
-                        "#{:02X}{:02X}{:02X}", // Ensure that each RGB value converts accurately to a HEX
-                        style.foreground.r, style.foreground.g, style.foreground.b
-                    ),
-                );
-                use syntect::highlighting::FontStyle;
-                if style.font_style.contains(FontStyle::BOLD) {
-                    t = t.set("font-weight", "bold");
-                }
-                if style.font_style.contains(FontStyle::ITALIC) {
-                    t = t.set("font-style", "italic");
-                }
-                t = t.add(svg::node::Text::new(esc));
-                text = text.add(t);
-            }
-
-        }
-        let x = font
-            .font
-            .layout(&segments, font.scale, Point { x: 1.0, y: 0.0 })
-            .last()
-            .unwrap()
-            .position()
-            .x;
-        max_width = max_width.max(x as u32);
-
-        g = g.add(text);
-    }
 
     let height = get_canvas_height(None, lines.len(), font);
 
