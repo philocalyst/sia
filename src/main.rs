@@ -47,12 +47,54 @@ struct Dimensions {
     height: u32,
 }
 
+impl FromStr for Dimensions {
+    type Err = SiaError;
+
+    fn from_str(s: &str) -> Result<Self, SiaError> {
+        let mut parts = s.split('x');
+
+        let w = parts
+            .next()
+            .and_then(|p| p.parse().ok())
+            .ok_or_else(|| SiaError::InvalidConfig("size".into()))?;
+
+        let h = parts
+            .next()
+            .and_then(|p| p.parse().ok())
+            .ok_or_else(|| SiaError::InvalidConfig("size".into()))?;
+
+        Ok(Dimensions {
+            width: w,
+
+            height: h,
+        })
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 struct Alpha(f32);
 
 impl Alpha {
     fn to_u8(self) -> u8 {
         (self.0.clamp(0.0, 1.0) * 255.0).round() as u8
+    }
+}
+
+impl FromStr for Alpha {
+    type Err = SiaError;
+
+    fn from_str(s: &str) -> Result<Self, SiaError> {
+        let v: f32 = s
+            .parse()
+            .map_err(|_| SiaError::InvalidConfig("alpha".into()))?;
+
+        Ok(Alpha(v.clamp(0.0, 1.0)))
+    }
+}
+
+impl fmt::Display for Alpha {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
