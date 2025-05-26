@@ -131,7 +131,7 @@ enum SiaError {
     Message(String),
 }
 
-fn parse_input(s: &str) -> Result<Input, SiaError> {
+fn parse_to_input(s: &str) -> Result<Input, SiaError> {
     // Convert to path
     let path = PathBuf::from(s);
 
@@ -139,8 +139,8 @@ fn parse_input(s: &str) -> Result<Input, SiaError> {
     if path.exists() && path.is_file() {
         let ext: String;
         // The extension is the valuable piece of info here. No ext, we need to guess.
-        if let Some(ext) = path.extension() {
-            ext = ext.to_string_lossy().into();
+        if let Some(extension) = path.extension() {
+            ext = extension.to_string_lossy().to_string();
         } else {
             ext = FileFormat::from_file(&path)?.extension().to_string();
         }
@@ -232,7 +232,7 @@ struct Cli {
     fg_alpha: Alpha,
 
     /// Text or file to render (\\n separated).
-    #[arg(short = 'I', long = "input", value_parser = parse_input)]
+    #[arg(short = 'I', long = "input", value_parser = parse_to_input)]
     input: Input,
 }
 
@@ -244,7 +244,7 @@ fn main() {
     }
 }
 
-fn run() -> Result<(), SiaError> {}
+fn run() -> Result<(), SiaError> {
     let cli = Cli::parse();
 
     // Get the font database early to get available fonts
@@ -254,3 +254,16 @@ fn run() -> Result<(), SiaError> {}
 
     // The font name should just be the final component
     let font_name = cli.font_path.file_name().unwrap().to_string_lossy();
+
+    // Determine the output file
+    let output = cli
+        .output
+        .clone()
+        .unwrap_or_else(|| PathBuf::from("output").with_extension("png"));
+
+    // TODO: This only includes three themes, so I'm going to offer an option for users to load their own, just need to see how they're defined.
+    let availble_themes = syntect::highlighting::ThemeSet::load_defaults();
+
+    let (doc, width, height) = code_to_svg;
+    Ok(())
+}
