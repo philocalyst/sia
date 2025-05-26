@@ -312,3 +312,42 @@ fn run() -> Result<(), Error> {
 
     Ok(())
 }
+
+fn strip_font_modifier(s: &str) -> String {
+    // List of modifiers you want to strip if they appear as the last word.
+    // You can add or remove entries here as needed.
+    let modifiers = [
+        "bold",
+        "italic",
+        "regular",
+        "light",
+        "medium",
+        "semibold",
+        "thin",
+        "black",
+        "book",
+        "condensed",
+        "extra",
+        "ultra",
+        "demi",
+        "heavy",
+        "oblique",
+    ];
+
+    // Split on any whitespace, collect words
+    let mut parts: Vec<&str> = s.split_whitespace().collect();
+
+    // If there's more than one word, check the last one
+    if parts.len() > 1 {
+        // Lowercase for case‐insensitive compare
+        let last = parts.last().unwrap().to_lowercase();
+        if modifiers.contains(&last.as_str()) {
+            // Drop the last token and rejoin with single spaces
+            parts.pop();
+            return parts.join(" ");
+        }
+    }
+
+    // Otherwise, return original
+    s.to_string()
+}
