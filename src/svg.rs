@@ -52,11 +52,6 @@ pub(crate) fn code_to_svg(
         .set("font-size", font.font_size)
         .set("fill", fg_hex.clone());
 
-    // |6| Just one <text> element per line
-    let mut hex_cache: HashMap<(u8, u8, u8), String> = HashMap::new();
-
-    let default_style = Style::default();
-
     let mut max_width = 0;
     for (i, line) in lines.iter().enumerate() {
         // For some reason 1.2 works better...
@@ -65,7 +60,7 @@ pub(crate) fn code_to_svg(
         // using space preserve otherwise it leads to even weirder space behavior.
         let mut text = Text::new("")
             .set("x", 0)
-            .set("y", y_em)
+            .set("y", format!("{:.2}em", y_em))
             .set("xml:space", "preserve");
 
         let mut segments = String::new();
@@ -113,7 +108,7 @@ pub(crate) fn code_to_svg(
 
     let height = get_canvas_height(None, lines.len(), font);
 
-    // Build up the SVG document
+    // Build up the SVG document boilerplate
     let mut doc = Document::new()
         .set("xmlns", "http://www.w3.org/2000/svg")
         .set("width", format!("{:.0}px", max_width))
