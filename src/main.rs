@@ -13,6 +13,8 @@ use thiserror::Error;
 
 mod svg;
 mod utils;
+
+use svg::code_to_svg;
 // The latin codes I know about. Compiled very ad-hoc, so if there are any missing please let me know. I would value some good advice here
 lazy_static! {
     static ref LATIN_CODES: Vec<&'static str> = vec![
@@ -243,16 +245,25 @@ fn main() {
     }
 }
 
-fn run() -> Result<(), SiaError> {
+fn run() -> Result<(), Error> {
     let cli = Cli::parse();
 
     // Get the font database early to get available fonts
     let mut tree_options = usvg::Options::default();
     tree_options.fontdb_mut().load_system_fonts(); // System fonts should always be loaded? Maybe this is needless
-    tree_options.fontdb_mut().load_font_file(cli.font_path);
+    tree_options.fontdb_mut().load_font_file(&cli.font_path);
 
     // The font name should just be the final component
-    let font_name = cli.font_path.file_name().unwrap().to_string_lossy();
+    let font_data = fs::read(&cli.font_path)?;
+    let font = Font::from_bytes(
+        font_data,
+        fontdue::FontSettings {
+            collection_index: 0,
+            scale: cli.font_size,
+            load_substitutions: true,
+        },
+    )
+    .unwrap();
 
     // Determine the output file
     let output = cli
@@ -263,6 +274,15 @@ fn run() -> Result<(), SiaError> {
     // TODO: This only includes three themes, so I'm going to offer an option for users to load their own, just need to see how they're defined.
     let availble_themes = syntect::highlighting::ThemeSet::load_defaults();
 
-    let (doc, width, height) = code_to_svg;
+    let (doc, width, height) = code_to_svg(
+        availble_themes.themes.get("base16-ocean.dark").unwrap(),
+        &cli.input,
+        &FontConfig {
+            font,
+            font_size: cli.font_size,
+        },
+    )?;
+
+    println!("{}", doc.to_string());
     Ok(())
 }
