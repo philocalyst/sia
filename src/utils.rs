@@ -13,6 +13,6 @@ pub fn get_canvas_height(
         let line_height = v_metrics.height;
 
         // Compute total height in px (and add one extra line’s worth of padding)
-        line_height as f32 * (num_lines as f32 + 1.0)
+        line_height as f32 * (num_lines as f32 + 1.0) * 1.58f32
     }
 }
