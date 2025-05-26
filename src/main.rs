@@ -166,6 +166,36 @@ fn parse_input(s: &str) -> Result<Input, SiaError> {
     }
 }
 
+pub fn parse_rgba8(s: &str) -> Result<rgb::RGBA8, String> {
+    // strip leading ‘#’ if present
+    let s = s.strip_prefix('#').unwrap_or(s);
+
+    // parse exactly two hex digits into a u8
+    fn hex2(pair: &str) -> Result<u8, String> {
+        u8::from_str_radix(pair, 16).map_err(|_| format!("`{}` is not valid hex", pair))
+    }
+
+    use rgb::RGBA8;
+    match s.len() {
+        6 => {
+            // RRGGBB → (R, G, B, 255)
+            let r = hex2(&s[0..2])?;
+            let g = hex2(&s[2..4])?;
+            let b = hex2(&s[4..6])?;
+            Ok(RGBA8::new(r, g, b, 255))
+        }
+        8 => {
+            // RRGGBBAA → (R, G, B, A)
+            let r = hex2(&s[0..2])?;
+            let g = hex2(&s[2..4])?;
+            let b = hex2(&s[4..6])?;
+            let a = hex2(&s[6..8])?;
+            Ok(RGBA8::new(r, g, b, a))
+        }
+        _ => Err("hex color must be 6 or 8 digits".into()),
+    }
+}
+
 #[derive(Parser, Debug)]
 #[command(name = "sia", version = "0.2.0", about = "Generate a font preview")]
 struct Cli {
