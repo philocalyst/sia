@@ -278,11 +278,13 @@ fn run() -> Result<(), Error> {
     // TODO: This only includes three themes, so I'm going to offer an option for users to load their own, just need to see how they're defined.
     let availble_themes = syntect::highlighting::ThemeSet::load_defaults();
 
+    let font_name = font.name().unwrap_or("Times New Roman").to_string();
+
     // Setup the rendering
     let mut tree_options = usvg::Options::default();
     tree_options.fontdb_mut().load_system_fonts();
     tree_options.dpi = 300.0;
-    tree_options.font_family = font.name().unwrap_or("Times New Roman").to_string();
+    tree_options.font_family = font_name;
     tree_options.font_size = cli.font_size;
 
     // Get our svg and final width/height measurements
