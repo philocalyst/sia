@@ -4,6 +4,7 @@ use anyhow::{Error, Result};
 use core::panic;
 use quick_xml;
 use rusttype::{Font, Point, Scale};
+use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
@@ -14,28 +15,28 @@ use svg::node::element::{
 use svg::Document;
 use svg::Node;
 use syntect::easy::HighlightLines;
-use syntect::highlighting::{Style, Theme, ThemeSet};
+use syntect::highlighting::{FontStyle, Style, Theme, ThemeSet};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
-use crate::utils::{get_canvas_height, get_char_width};
+use crate::utils::get_canvas_height;
 use crate::{Dimensions, FontConfig, Input, SiaError};
 
 pub(crate) fn code_to_svg(
     theme: &Theme,
     source: &Input,
-    font: &Font,
+    font: &FontConfig,
 ) -> Result<(Document, u32, u32), Error> {
     // Prepare highlighter
     let ss = SyntaxSet::load_defaults_newlines();
     let syntax = ss
-        .find_syntax_by_token(&source.kind)
+        .find_syntax_by_token(&source.ext)
         .unwrap_or_else(|| ss.find_syntax_plain_text());
 
     let mut highlighter = HighlightLines::new(syntax, theme);
 
     // Highlight each line into Vec<(Style, &str)>
-    let lines: Vec<Vec<(Style, &str)>> = LinesWithEndings::from(&source.contents.source)
+    let lines: Vec<Vec<(Style, &str)>> = LinesWithEndings::from(&source.contents)
         .map(|ln| highlighter.highlight_line(ln, &ss).unwrap())
         .collect();
 
@@ -52,7 +53,86 @@ pub(crate) fn code_to_svg(
         .set("fill", fg_hex.clone());
 
     // |6| Just one <text> element per line
-    // TODO: The actual logic again!!!
+    let mut hex_cache: HashMap<(u8, u8, u8), String> = HashMap::new();
+
+    let default_style = Style::default();
+
+    let mut max_width = 0;
+    for (i, line) in lines.iter().enumerate() {
+        let y_em = (i + 1) as f64 * 1.2;
+        let mut text = Text::new("")
+            .set("x", 0.0)
+            .set("y", y_em)
+            .set("xml:space", "preserve");
+
+        let mut cur_style = &default_style;
+        let mut buf = String::new();
+
+        for &(ref style, segment) in line {
+            if style != cur_style {
+                // flush the buffered text for cur_style
+                if !buf.is_empty() {
+                    let mut t = TSpan::new("").add(svg::node::Text::new(&buf));
+                    if cur_style != &default_style {
+                        // fill
+                        let key = (
+                            cur_style.foreground.r,
+                            cur_style.foreground.g,
+                            cur_style.foreground.b,
+                        );
+                        let hex = hex_cache
+                            .entry(key)
+                            .or_insert_with(|| format!("#{:02X}{:02X}{:02X}", key.0, key.1, key.2));
+                        t = t.set("fill", hex.as_str());
+
+                        // weight/style
+                        if cur_style.font_style.contains(FontStyle::BOLD) {
+                            t = t.set("font-weight", "bold");
+                        }
+                        if cur_style.font_style.contains(FontStyle::ITALIC) {
+                            t = t.set("font-style", "italic");
+                        }
+                    }
+                    text = text.add(t);
+                    buf.clear();
+                }
+                cur_style = style;
+            }
+            buf.push_str(&segment);
+        }
+
+        // flush the last run
+        if !buf.is_empty() {
+            let mut t = TSpan::new("").add(svg::node::Text::new(&buf));
+            if cur_style != &default_style {
+                let key = (
+                    cur_style.foreground.r,
+                    cur_style.foreground.g,
+                    cur_style.foreground.b,
+                );
+                let hex = hex_cache
+                    .entry(key)
+                    .or_insert_with(|| format!("#{:02X}{:02X}{:02X}", key.0, key.1, key.2));
+                t = t.set("fill", hex.as_str());
+                if cur_style.font_style.contains(FontStyle::BOLD) {
+                    t = t.set("font-weight", "bold");
+                }
+                if cur_style.font_style.contains(FontStyle::ITALIC) {
+                    t = t.set("font-style", "italic");
+                }
+            }
+            text = text.add(t);
+        }
+
+        // Calculate the width for this line
+        let width: f32 = buf
+            .chars()
+            .map(|c| font.font.metrics(c, font.font_size).advance_width)
+            .sum();
+        max_width = max_width.max(width as u32);
+
+        g = g.add(text);
+    }
 
     let height = get_canvas_height(None, lines.len(), font);
 
