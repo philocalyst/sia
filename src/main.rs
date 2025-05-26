@@ -283,6 +283,8 @@ fn run() -> Result<(), Error> {
         },
     )?;
 
-    println!("{}", doc.to_string());
+    let svg = doc.to_string().replace('\n', "");
+
+    println!("{}", svg);
     Ok(())
 }
