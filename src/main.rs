@@ -28,12 +28,6 @@ lazy_static! {
     ];
 }
 
-struct FontConfig {
-    font: Font,
-    line_height: f32,
-    font_size: f32,
-}
-
 #[derive(Clone, Debug)]
 struct Input {
     file_handler: Option<PathBuf>,

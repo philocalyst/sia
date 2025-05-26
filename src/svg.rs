@@ -24,7 +24,7 @@ use crate::{Dimensions, FontConfig, Input, SiaError};
 pub(crate) fn code_to_svg(
     theme: &Theme,
     source: &Input,
-    font: &FontConfig,
+    font: &Font,
 ) -> Result<(Document, u32, u32), Error> {
     // Prepare highlighter
     let ss = SyntaxSet::load_defaults_newlines();
