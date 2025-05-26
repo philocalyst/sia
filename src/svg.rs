@@ -48,7 +48,7 @@ pub(crate) fn code_to_svg(
 
     // a semantic <g> for all text
     let mut g = Group::new()
-        .set("font-family", "Geneva")
+        .set("font-family", font.font.name().unwrap())
         .set("font-size", font.font_size)
         .set("fill", fg_hex.clone());
 
