@@ -1,3 +1,18 @@
+use anyhow::Error;
+use clap::Parser;
+use core::{error, fmt};
+use file_format::FileFormat;
+use fontdue::Font;
+use image::{ImageError, Rgba, RgbaImage};
+use lazy_static::lazy_static;
+use log::{debug, error, info, warn};
+use std::io;
+use std::str::FromStr;
+use std::{fs, path::PathBuf};
+use thiserror::Error;
+
+mod svg;
+mod utils;
 // The latin codes I know about. Compiled very ad-hoc, so if there are any missing please let me know. I would value some good advice here
 lazy_static! {
     static ref LATIN_CODES: Vec<&'static str> = vec![
