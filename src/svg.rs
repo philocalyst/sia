@@ -21,12 +21,12 @@ use syntect::util::LinesWithEndings;
 use crate::utils::{get_canvas_height, get_char_width};
 use crate::{Dimensions, FontConfig, Input, SiaError};
 
-pub fn code_to_svg(
+pub(crate) fn code_to_svg(
     theme: &Theme,
     source: &Input,
     font: &FontConfig,
 ) -> Result<(Document, u32, u32), Error> {
-    // |1| Prepare highlighter
+    // Prepare highlighter
     let ss = SyntaxSet::load_defaults_newlines();
     let syntax = ss
         .find_syntax_by_token(&source.kind)
@@ -34,12 +34,12 @@ pub fn code_to_svg(
 
     let mut highlighter = HighlightLines::new(syntax, theme);
 
-    // |2| Highlight each line into Vec<(Style, &str)>
+    // Highlight each line into Vec<(Style, &str)>
     let lines: Vec<Vec<(Style, &str)>> = LinesWithEndings::from(&source.contents.source)
         .map(|ln| highlighter.highlight_line(ln, &ss).unwrap())
         .collect();
 
-    // |4| Extract default bg/fg from theme.settings
+    // Extract default bg/fg from theme.settings
     let bg = theme.settings.background.unwrap();
     let fg = theme.settings.foreground.unwrap();
     let bg_hex = format!("#{:02X}{:02X}{:02X}", bg.r, bg.g, bg.b);
@@ -52,6 +52,7 @@ pub fn code_to_svg(
         .set("fill", fg_hex.clone());
 
     // |6| Just one <text> element per line
+    // TODO: The actual logic again!!!
 
     let height = get_canvas_height(None, lines.len(), font);
 
