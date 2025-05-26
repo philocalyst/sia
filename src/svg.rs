@@ -68,67 +68,42 @@ pub(crate) fn code_to_svg(
             .set("y", y_em)
             .set("xml:space", "preserve");
 
-        let mut cur_style = &default_style;
-        let mut buf = String::new();
+        let mut segments = String::new();
 
-        for &(ref style, segment) in line {
-            if style != cur_style {
-                // flush the buffered text for cur_style
-                if !buf.is_empty() {
-                    let mut t = TSpan::new("").add(svg::node::Text::new(&buf));
-                    if cur_style != &default_style {
-                        // fill
-                        let key = (
-                            cur_style.foreground.r,
-                            cur_style.foreground.g,
-                            cur_style.foreground.b,
-                        );
-                        let hex = hex_cache
-                            .entry(key)
-                            .or_insert_with(|| format!("#{:02X}{:02X}{:02X}", key.0, key.1, key.2));
-                        t = t.set("fill", hex.as_str());
-
-                        // weight/style
-                        if cur_style.font_style.contains(FontStyle::BOLD) {
-                            t = t.set("font-weight", "bold");
-                        }
-                        if cur_style.font_style.contains(FontStyle::ITALIC) {
-                            t = t.set("font-style", "italic");
-                        }
-                    }
-                    text = text.add(t);
-                    buf.clear();
-                }
-                cur_style = style;
+        for &(mut style, segment) in line {
+            // If style provided holds no background or foreground, fallback to the default style.
+            if style.foreground == fg && style.font_style.is_empty() {
+                style = Style::default();
             }
-            buf.push_str(&segment);
-        }
 
-        // flush the last run
-        if !buf.is_empty() {
-            let mut t = TSpan::new("").add(svg::node::Text::new(&buf));
-            if cur_style != &default_style {
-                let key = (
-                    cur_style.foreground.r,
-                    cur_style.foreground.g,
-                    cur_style.foreground.b,
-                );
-                let hex = hex_cache
-                    .entry(key)
-                    .or_insert_with(|| format!("#{:02X}{:02X}{:02X}", key.0, key.1, key.2));
-                t = t.set("fill", hex.as_str());
-                if cur_style.font_style.contains(FontStyle::BOLD) {
-                    t = t.set("font-weight", "bold");
-                }
-                if cur_style.font_style.contains(FontStyle::ITALIC) {
-                    t = t.set("font-style", "italic");
-                }
+            let mut t = TSpan::new(segment);
+
+            // Otherwise wrap in <tspan> with only the differing attrs
+
+            t = t.set(
+                "fill",
+                format!(
+                    "#{:02X}{:02X}{:02X}", // Ensure that each RGB value converts accurately to a HEX
+                    style.foreground.r, style.foreground.g, style.foreground.b
+                ),
+            );
+
+            use syntect::highlighting::FontStyle;
+
+            if style.font_style.contains(FontStyle::BOLD) {
+                t = t.set("font-weight", "bold");
             }
+
+            if style.font_style.contains(FontStyle::ITALIC) {
+                t = t.set("font-style", "italic");
+            }
+
             text = text.add(t);
+            segments.push_str(segment);
         }
 
         // Calculate the width for this line
-        let width: f32 = buf
+        let width: f32 = segments
             .chars()
             .map(|c| font.font.metrics(c, font.font_size).advance_width)
             .sum();
