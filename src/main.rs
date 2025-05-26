@@ -1,11 +1,11 @@
 use anyhow::Error;
 use clap::Parser;
-use core::{error, fmt};
+use core::fmt;
 use file_format::FileFormat;
 use fontdue::Font;
-use image::{ImageError, Rgba, RgbaImage};
+use image::ImageError;
 use lazy_static::lazy_static;
-use log::{debug, error, info, warn};
+use log::error;
 use resvg;
 use std::io;
 use std::str::FromStr;

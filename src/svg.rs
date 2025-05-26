@@ -1,13 +1,6 @@
 // Code for generating the svg file
 
 use anyhow::{Error, Result};
-use core::panic;
-use quick_xml;
-use rusttype::{Font, Point, Scale};
-use std::collections::HashMap;
-use std::fs;
-use std::io::Write;
-use std::path::PathBuf;
 use svg::node::element::{
     ClipPath, Definitions, Filter, FilterEffectGaussianBlur, FilterEffectMerge,
     FilterEffectMergeNode, FilterEffectOffset, Group, Rectangle, TSpan, Text,
@@ -15,12 +8,12 @@ use svg::node::element::{
 use svg::Document;
 use svg::Node;
 use syntect::easy::HighlightLines;
-use syntect::highlighting::{FontStyle, Style, Theme, ThemeSet};
+use syntect::highlighting::{Style, Theme};
 use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
 use crate::utils::get_canvas_height;
-use crate::{Dimensions, FontConfig, Input, SiaError};
+use crate::{FontConfig, Input};
 
 pub(crate) fn code_to_svg(
     theme: &Theme,
