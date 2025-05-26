@@ -59,9 +59,12 @@ pub(crate) fn code_to_svg(
 
     let mut max_width = 0;
     for (i, line) in lines.iter().enumerate() {
+        // y in “em”
+
         let y_em = (i + 1) as f64 * 1.2;
+
         let mut text = Text::new("")
-            .set("x", 0.0)
+            .set("x", 0)
             .set("y", y_em)
             .set("xml:space", "preserve");
 
