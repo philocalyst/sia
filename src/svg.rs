@@ -59,10 +59,10 @@ pub(crate) fn code_to_svg(
 
     let mut max_width = 0;
     for (i, line) in lines.iter().enumerate() {
-        // y in “em”
-
+        // For some reason 1.2 works better...
         let y_em = (i + 1) as f64 * 1.2;
 
+        // using space preserve otherwise it leads to even weirder space behavior.
         let mut text = Text::new("")
             .set("x", 0)
             .set("y", y_em)
@@ -70,23 +70,22 @@ pub(crate) fn code_to_svg(
 
         let mut segments = String::new();
 
-        for &(mut style, segment) in line {
-            // If style provided holds no background or foreground, fallback to the default style.
-            if style.foreground == fg && style.font_style.is_empty() {
-                style = Style::default();
-            }
+        for &(ref style, segment) in line {
+            // Check if there is style information for the current segment.
+            let unstyled = style.foreground == fg && style.font_style.is_empty();
 
             let mut t = TSpan::new(segment);
 
-            // Otherwise wrap in <tspan> with only the differing attrs
-
-            t = t.set(
-                "fill",
-                format!(
-                    "#{:02X}{:02X}{:02X}", // Ensure that each RGB value converts accurately to a HEX
-                    style.foreground.r, style.foreground.g, style.foreground.b
-                ),
-            );
+            // Only apply the fill if there is style information
+            if !unstyled {
+                t = t.set(
+                    "fill",
+                    format!(
+                        "#{:02X}{:02X}{:02X}", // Ensure that each RGB value converts accurately to a HEX
+                        style.foreground.r, style.foreground.g, style.foreground.b
+                    ),
+                );
+            }
 
             use syntect::highlighting::FontStyle;
 
@@ -114,7 +113,7 @@ pub(crate) fn code_to_svg(
 
     let height = get_canvas_height(None, lines.len(), font);
 
-    // |5| Build up the SVG document
+    // Build up the SVG document
     let mut doc = Document::new()
         .set("xmlns", "http://www.w3.org/2000/svg")
         .set("width", format!("{:.0}px", max_width))
