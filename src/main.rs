@@ -280,9 +280,9 @@ fn run() -> Result<(), Error> {
 
     let font_name = font.name().unwrap_or("Times New Roman").to_string();
 
+    let font_name = strip_font_modifier(&font_name);
+
     // Setup the rendering
-    let mut tree_options = usvg::Options::default();
-    tree_options.fontdb_mut().load_system_fonts();
     tree_options.dpi = 300.0;
     tree_options.font_family = font_name;
     tree_options.font_size = cli.font_size;
@@ -310,6 +310,5 @@ fn run() -> Result<(), Error> {
 
     map.save_png(&output)?;
 
-    println!("{}", svg);
     Ok(())
 }
