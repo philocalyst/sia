@@ -6,10 +6,14 @@ use fontdue::Font;
 use image::{ImageError, Rgba, RgbaImage};
 use lazy_static::lazy_static;
 use log::{debug, error, info, warn};
+use resvg;
 use std::io;
 use std::str::FromStr;
 use std::{fs, path::PathBuf};
 use thiserror::Error;
+use tiny_skia;
+use tiny_skia_path;
+use usvg;
 
 mod svg;
 mod utils;
@@ -251,7 +255,7 @@ fn run() -> Result<(), Error> {
     // Get the font database early to get available fonts
     let mut tree_options = usvg::Options::default();
     tree_options.fontdb_mut().load_system_fonts(); // System fonts should always be loaded? Maybe this is needless
-    tree_options.fontdb_mut().load_font_file(&cli.font_path);
+    tree_options.fontdb_mut().load_font_file(&cli.font_path)?;
 
     // The font name should just be the final component
     let font_data = fs::read(&cli.font_path)?;
@@ -274,7 +278,15 @@ fn run() -> Result<(), Error> {
     // TODO: This only includes three themes, so I'm going to offer an option for users to load their own, just need to see how they're defined.
     let availble_themes = syntect::highlighting::ThemeSet::load_defaults();
 
-    let (doc, width, height) = code_to_svg(
+    // Setup the rendering
+    let mut tree_options = usvg::Options::default();
+    tree_options.fontdb_mut().load_system_fonts();
+    tree_options.dpi = 300.0;
+    tree_options.font_family = font.name().unwrap_or("Times New Roman").to_string();
+    tree_options.font_size = cli.font_size;
+
+    // Get our svg and final width/height measurements
+    let (svg, width, height) = code_to_svg(
         availble_themes.themes.get("base16-ocean.dark").unwrap(),
         &cli.input,
         &FontConfig {
@@ -283,7 +295,18 @@ fn run() -> Result<(), Error> {
         },
     )?;
 
-    let svg = doc.to_string().replace('\n', "");
+    let svg = svg.to_string().replace('\n', "");
+    let tree = usvg::Tree::from_str(&svg, &tree_options)?;
+
+    let mut map = tiny_skia::Pixmap::new(width, height).unwrap();
+
+    resvg::render(
+        &tree,
+        tiny_skia_path::Transform::default(),
+        &mut map.as_mut(),
+    );
+
+    map.save_png(&output)?;
 
     println!("{}", svg);
     Ok(())
