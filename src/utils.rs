@@ -9,10 +9,15 @@ pub fn get_canvas_height(
         dims.height as f32
     } else {
         // Get vertical metrics & compute line height
-        let v_metrics = font.font.metrics('A', font.font_size);
-        let line_height = v_metrics.height;
+        let line_height: f32;
+        if let Some(v_metrics) = font.font.vertical_line_metrics(font.font_size) {
+            line_height = v_metrics.ascent.ceil() + v_metrics.descent.floor();
+        } else {
+            let metrics = font.font.metrics('A', font.font_size);
+            line_height = metrics.height as f32;
+        }
 
-        // Compute total height in px (and add one extra line’s worth of padding)
-        line_height as f32 * (num_lines as f32 + 1.0) * 1.58f32
+        // Compute total height in px
+        line_height * num_lines as f32 * 1.52f32
     }
 }
