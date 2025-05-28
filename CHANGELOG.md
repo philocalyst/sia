@@ -6,6 +6,52 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [1.0.0] – 2025-05-28
+
+### Added
+- CLI
+  - `-T, --theme <THEME_NAME>` option to select a Syntect syntax-highlighting theme.  
+  - `--bg-alpha <α>` and `--fg-alpha <α>` options (and `SIA_BG_ALPHA`/`SIA_FG_ALPHA` env vars) for background/foreground opacity.
+- Rendering
+  - Introduced `Colors` struct to carry alpha values into `code_to_svg`.  
+  - Exported `set_dimensions` and `get_dimensions` for working with SVG element sizes.  
+- Parsing & configuration
+  - `parse_rgba8` helper for `#RRGGBB` / `#RRGGBBAA` color codes.  
+  - `Dimensions` is now optional (`Option<Dimensions>`), and `FromStr` for `Dimensions` (`WxH`) and `Alpha` (clamped 0.0–1.0).  
+  - `strip_font_modifier` to clean up font family names.  
+  - Unified `FontConfig` struct (font path, size, etc.) replaces ad-hoc parameters.  
+- Documentation & examples
+  - Added `example.png` and embedded it in the README.  
+  - Added `LICENSE` (MIT).  
+
+### Changed
+- CLI input handling
+  - Replaced raw string inputs with an `Input` struct that handles file vs. literal text.  
+- SVG pipeline
+  - `code_to_svg` now returns a `svg::Document`; width/height are measured with `get_dimensions`.  
+  - Removed redundant newline stripping in the SVG builder.  
+  - Improved formatting and comments throughout `src/svg.rs` and `src/utils.rs`.  
+- Utils
+  - `get_canvas_height` signature simplified: always computes based on font metrics and line count (no extra hard-coded padding).  
+- README
+  - Cleaned up code fences to use “shell” for clarity.  
+  - Removed old screenshot section, consolidated “Screenshot” and “Example” sections.  
+- Dependencies
+  - Added: `svg`, `syntect`, `resvg`, `tiny-skia`, `tiny-skia-path`, `file-format`, `anyhow`, `fontdue`, `serde`/`serde_derive`, …  
+  - Removed: legacy XML parsing (`quick-xml`/`roxmltree`), PNG fallback code (`src/image.rs`), `Content` struct, relative font sizing support.
+
+### Fixed
+- Corrected total canvas height calculation in `get_canvas_height` (no extra “+1” line padding).  
+- Fixed README formatting (code blocks, badges, licensing references).  
+- Ensured `code_to_svg` honors user-specified theme and alpha values.  
+- Removed stray unused imports and collapsed commented-out prototype code.
+
+### Removed
+- Legacy image-generation fallback (`src/image.rs`).  
+- Raw XML/SVG parsing code and `get_svg_elements` helper.  
+- Hard-coded window-control drawing and prototype helpers in `src/svg.rs`.  
+- Relative `%` font-size support (`FontSize::Rel`).  
+
 ## [0.2.0] – 2025-05-13
 
 ### Added
@@ -75,6 +121,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/philocalyst/sia/compare/v0.2.0…HEAD
+[Unreleased]: https://github.com/philocalyst/sia/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/philocalyst/sia/compare/v0.2.0...v1.0.0  
 [0.2.0]: https://github.com/philocalyst/sia/compare/v1.1.0…v0.2.0  
 [0.1.0]: https://github.com/philocalyst/sia/compare/…v0.1.0 
