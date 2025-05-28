@@ -47,6 +47,11 @@ struct Input {
     ext: String,
 }
 
+struct Colors {
+    background_alpha: Alpha,
+    foreground_alpha: Alpha,
+}
+
 #[derive(Debug, Clone, Copy)]
 struct Dimensions {
     width: u32,
