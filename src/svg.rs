@@ -19,7 +19,7 @@ pub(crate) fn code_to_svg(
     theme: &Theme,
     source: &Input,
     font: &FontConfig,
-) -> Result<(Document, u32, u32), Error> {
+) -> Result<Document, Error> {
     // Prepare highlighter
     let ss = SyntaxSet::load_defaults_newlines();
     let syntax = ss
@@ -116,8 +116,7 @@ pub(crate) fn code_to_svg(
 
     doc = doc.add(g);
 
-    let result = (doc, max_width, height as u32);
-    Ok(result)
+    Ok(doc)
 }
 
 fn add_shadow(elem: Document, id: &str, x_offset: f64, y_offset: f64, blur: f64) -> Document {

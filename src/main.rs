@@ -18,7 +18,7 @@ use usvg;
 mod svg;
 mod utils;
 
-use svg::code_to_svg;
+use svg::{code_to_svg, get_dimensions};
 // The latin codes I know about. Compiled very ad-hoc, so if there are any missing please let me know. I would value some good advice here
 lazy_static! {
     static ref LATIN_CODES: Vec<&'static str> = vec![
@@ -289,7 +289,7 @@ fn run() -> Result<(), Error> {
     tree_options.font_size = cli.font_size;
 
     // Get our svg and final width/height measurements
-    let (svg, width, height) = code_to_svg(
+    let svg = code_to_svg(
         availble_themes.themes.get("base16-ocean.dark").unwrap(),
         &cli.input,
         &FontConfig {
@@ -298,6 +298,8 @@ fn run() -> Result<(), Error> {
             font_size: cli.font_size,
         },
     )?;
+
+    let (width, height) = get_dimensions(&svg);
 
     let svg = svg.to_string().replace('\n', "");
     let tree = usvg::Tree::from_str(&svg, &tree_options)?;
