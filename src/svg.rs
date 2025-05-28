@@ -115,7 +115,7 @@ pub(crate) fn code_to_svg(
         g = g.add(text);
     }
 
-    let height = get_canvas_height(None, lines.len(), font);
+    let height = get_canvas_height(lines.len(), font);
 
     // Build up the SVG document boilerplate
     let mut doc = Document::new()
