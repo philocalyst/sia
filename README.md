@@ -30,7 +30,7 @@ Ready to preview your fonts? Jump to the [Installation](#install) section to get
 
 The most basic way to use `sia` is to provide a font file and some input text:
 
-```bash
+```shell
 sia --font /path/to/your/font.ttf --input "Hello, world!" --output preview.png
 ```
 
@@ -40,7 +40,7 @@ This will generate an image `preview.png` showing "Hello, world!" rendered with 
 
 You can provide the text to be rendered directly on the command line using the `-I` or `--input` option. Alternatively, you can provide a file path, and `sia` will read the content of the file:
 
-```bash
+```shell
 # Input from a file
 sia -F YourFont.otf -I ./path/to/your/code.rs -O code_preview.png
 ```
@@ -82,7 +82,7 @@ All CLI options can also be configured via environment variables. For example, i
 
 **Example with more options:**
 
-```bash
+```shell
 export SIA_FONT="MesloLGS NF Regular.ttf"
 export SIA_FONT_SIZE="18"
 export SIA_DIMENSIONS="1200x800"
@@ -108,16 +108,16 @@ To build **sia** from source:
 
 1.  Ensure you have the Rust toolchain installed.
 2.  Clone the repository:
-    ```bash
-    git clone https://github.com/philocalyst/sia.git # Or your repo URL
+    ```shell
+    git clone https://github.com/philocalyst/sia.git 
     cd sia
     ```
 3.  Build the project:
-    ```bash
+    ```shell
     cargo build
     ```
     For a release build:
-    ```bash
+    ```shell
     cargo build --release
     ```
     The executable will be in `target/debug/sia` or `target/release/sia`.
@@ -126,7 +126,7 @@ To build **sia** from source:
 
 **sia** uses `env_logger` for logging. To enable debug logs, set the `RUST_LOG` environment variable:
 
-```bash
+```shell
 RUST_LOG=debug cargo run -- -F YourFont.ttf -I "Test"
 # Or for an installed binary
 RUST_LOG=debug sia -F YourFont.ttf -I "Test"
@@ -138,7 +138,7 @@ RUST_LOG=debug sia -F YourFont.ttf -I "Test"
 
 Ensure you have Rust and Cargo installed. You can then install **sia** directly using Cargo:
 
-```bash
+```shell
 cargo install --path .
 ```
 
@@ -173,5 +173,4 @@ All notable changes to this project are documented in the [CHANGELOG.md](CHANGEL
 
 ## License
 
-This project is licensed under the [Your License Here] - see the `LICENSE.md` file for details.
-*(Please replace `[Your License Here]` with your actual license, e.g., MIT License, Apache 2.0, and ensure you have a `LICENSE.md` file.)*
+This project is licensed under the [MIT] - see the `LICENSE.md` file for details.
