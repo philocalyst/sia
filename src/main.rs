@@ -234,6 +234,10 @@ struct Cli {
     #[arg(long, default_value_t = Alpha(1.0), env = "SIA_FG_ALPHA")]
     fg_alpha: Alpha,
 
+    /// The theme to use. Default is ocean.
+    #[arg(short = 'T', long = "theme", default_value = "base16-ocean.dark")]
+    theme: String,
+
     /// Text or file to render (\\n separated).
     #[arg(short = 'I', long = "input", value_parser = parse_to_input)]
     input: Input,
@@ -287,7 +291,7 @@ fn run() -> Result<(), Error> {
 
     // Get our svg and final width/height measurements
     let svg = code_to_svg(
-        availble_themes.themes.get("base16-ocean.dark").unwrap(),
+        availble_themes.themes.get(&cli.theme).unwrap(),
         &cli.input,
         &FontConfig {
             font,
