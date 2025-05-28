@@ -9,7 +9,7 @@
 **sia** is a command-line tool written in Rust that generates highly customizable preview images of fonts. It can take text input directly or from a file, apply syntax highlighting using various themes, and render it with your chosen font into an image file. This project is a Rust rewrite and evolution of the original Lua-based `fontpeek` tool.
 
 Example!!! ->
-[![Language Version](example.png)]
+![Language Version](example.png)
 
 ## Get Started
 
