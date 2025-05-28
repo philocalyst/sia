@@ -226,14 +226,6 @@ struct Cli {
     #[arg(long, env = "SIA_FONT_SIZE")]
     font_size: f32,
 
-    /// Background color
-    #[arg(long, default_value = "#FFFFFF", env = "SIA_BG_COLOR", value_parser = parse_rgba8)]
-    bg_color: rgb::RGBA8,
-
-    /// Text color
-    #[arg(long, default_value = "#000000", env = "SIA_FG_COLOR", value_parser = parse_rgba8)]
-    fg_color: rgb::RGBA8,
-
     /// Background alpha
     #[arg(long, default_value_t = Alpha(1.0), env = "SIA_BG_ALPHA")]
     bg_alpha: Alpha,
@@ -301,6 +293,10 @@ fn run() -> Result<(), Error> {
             font,
             font_path: cli.font_path,
             font_size: cli.font_size,
+        },
+        &Colors {
+            background_alpha: cli.bg_alpha,
+            foreground_alpha: cli.fg_alpha,
         },
     )?;
 

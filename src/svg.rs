@@ -13,12 +13,13 @@ use syntect::parsing::SyntaxSet;
 use syntect::util::LinesWithEndings;
 
 use crate::utils::get_canvas_height;
-use crate::{FontConfig, Input};
+use crate::{Colors, FontConfig, Input};
 
 pub(crate) fn code_to_svg(
     theme: &Theme,
     source: &Input,
     font: &FontConfig,
+    colors: &Colors,
 ) -> Result<Document, Error> {
     // Prepare highlighter
     let ss = SyntaxSet::load_defaults_newlines();
@@ -69,8 +70,23 @@ pub(crate) fn code_to_svg(
                 t = t.set(
                     "fill",
                     format!(
-                        "#{:02X}{:02X}{:02X}", // Ensure that each RGB value converts accurately to a HEX
-                        style.foreground.r, style.foreground.g, style.foreground.b
+                        "#{:02X}{:02X}{:02X}{:02X}", // Ensure that each RGB value converts accurately to a HEX
+                        style.foreground.r,
+                        style.foreground.g,
+                        style.foreground.b,
+                        colors.foreground_alpha.to_u8()
+                    ),
+                );
+            } else {
+                // Use the default foreground if no style is found
+                t = t.set(
+                    "fill",
+                    format!(
+                        "#{:02X}{:02X}{:02X}{:02X}", // Ensure that each RGB value converts accurately to a HEX
+                        fg.r,
+                        fg.g,
+                        fg.b,
+                        colors.background_alpha.to_u8()
                     ),
                 );
             }
@@ -183,7 +199,7 @@ fn add_outline<'a, E: Node>(elem: &'a mut E, width: f64, color: &str) -> &'a mut
 }
 
 /// Sets width/height attributes
-fn set_dimensions<E: Node>(elem: &mut E, width: f64, height: f64) -> &mut E {
+pub fn set_dimensions<E: Node>(elem: &mut E, width: f64, height: f64) -> &mut E {
     elem.assign("width", width);
     elem.assign("height", height);
     elem
