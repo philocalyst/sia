@@ -36,6 +36,7 @@ lazy_static! {
 
 struct FontConfig {
     font: Font,
+    font_path: PathBuf,
     font_size: f32,
 }
 
@@ -293,6 +294,7 @@ fn run() -> Result<(), Error> {
         &cli.input,
         &FontConfig {
             font,
+            font_path: cli.font_path,
             font_size: cli.font_size,
         },
     )?;
