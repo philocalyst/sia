@@ -190,7 +190,7 @@ fn set_dimensions<E: Node>(elem: &mut E, width: f64, height: f64) -> &mut E {
 }
 
 /// Reads `width`/`height` attributes (e.g. `"500px"` or `"200"`) and returns integers.
-fn get_dimensions<E: Node>(elem: &E) -> (i32, i32) {
+pub fn get_dimensions<E: Node>(elem: &E) -> (u32, u32) {
     let element_attributes = elem.get_attributes().unwrap();
     let w = element_attributes.get("width").unwrap();
     let h = element_attributes.get("height").unwrap();
@@ -198,6 +198,6 @@ fn get_dimensions<E: Node>(elem: &E) -> (i32, i32) {
 }
 
 /// Helper to strip `"px"` and parse an integer, defaulting to 0.
-fn dimension_to_int(s: &str) -> i32 {
-    s.trim_end_matches("px").parse::<i32>().unwrap_or(0)
+fn dimension_to_int(s: &str) -> u32 {
+    s.trim_end_matches("px").parse::<u32>().unwrap_or(0)
 }
