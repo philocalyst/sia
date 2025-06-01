@@ -260,18 +260,6 @@ fn run() -> Result<(), Error> {
     let mut tree_options = usvg::Options::default();
     tree_options.fontdb_mut().load_system_fonts(); // System fonts should always be loaded? Maybe this is needless
 
-    // The font name should just be the final component
-    let font_data = fs::read(&cli.font)?;
-    let font = Font::from_bytes(
-        font_data,
-        fontdue::FontSettings {
-            collection_index: 0,
-            scale: cli.font_size,
-            load_substitutions: true,
-        },
-    )
-    .unwrap();
-
     // Determine the output file
     let output = cli
         .output
@@ -302,6 +290,17 @@ fn run() -> Result<(), Error> {
         Source::File(path) => std::fs::read(path)?,
         Source::SharedFile(_, data) => data.as_ref().as_ref().to_vec(),
     };
+
+    // The font name should just be the final component
+    let font = Font::from_bytes(
+        font_bytes.clone(),
+        fontdue::FontSettings {
+            collection_index: 0,
+            scale: cli.font_size,
+            load_substitutions: true,
+        },
+    )
+    .unwrap();
 
     // Get our svg and final width/height measurements
     let svg = code_to_svg(
