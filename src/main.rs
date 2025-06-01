@@ -281,18 +281,18 @@ fn run() -> Result<(), Error> {
     // TODO: This only includes three themes, so I'm going to offer an option for users to load their own, just need to see how they're defined.
     let availble_themes = syntect::highlighting::ThemeSet::load_defaults();
 
-    let font_name = font.name().unwrap_or("Times New Roman").to_string();
+    let font_name = &cli.font;
 
     // Setup the rendering
     tree_options.dpi = 300.0;
-    tree_options.font_family = font_name;
+    tree_options.font_family = font_name.clone();
     tree_options.font_size = cli.font_size;
 
     // Get the font_face
     let font_face = tree_options
         .fontdb_mut()
         .faces()
-        .find(|face| face.post_script_name.eq(&cli.font))
+        .find(|face| face.families.iter().any(|family| family.0.eq(&cli.font)))
         .ok_or("Font not found")
         .unwrap();
 
