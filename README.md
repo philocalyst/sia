@@ -21,10 +21,10 @@ Ready to preview your fonts? Jump to the [Installation](#install) section to get
 
 ### Basic Usage
 
-The most basic way to use `sia` is to provide a font file and some input text:
+The most basic way to use `sia` is to provide a font and some input text:
 
 ```shell
-sia --font /path/to/your/font.ttf --input "Hello, world!" --output preview.png
+sia --font "Your font name" --input "Hello, world!" --output preview.png
 ```
 
 This will generate an image `preview.png` showing "Hello, world!" rendered with the specified font.
@@ -35,7 +35,7 @@ You can provide the text to be rendered directly on the command line using the `
 
 ```shell
 # Input from a file
-sia -F YourFont.otf -I ./path/to/your/code.rs -O code_preview.png
+sia -F YourFont -I ./path/to/your/code.rs -O code_preview.png
 ```
 
 `sia` will attempt to detect the file type for syntax highlighting based on the extension. If it's not a file, it will try to guess based on the content.
@@ -49,7 +49,7 @@ sia -F YourFont.otf -I ./path/to/your/code.rs -O code_preview.png
     *   Environment Variable: `SIA_OUT_FILE`
 
 *   **Font:**
-    *   `-F, --font <PATH>`: Path to the font file (required).
+    *   `-F, --font <PATH>`: Name of your desired font (required).
     *   Environment Variable: `SIA_FONT`
     *   `--font-size <SIZE>`: Font size in pixels.
     *   Environment Variable: `SIA_FONT_SIZE`
@@ -166,4 +166,4 @@ All notable changes to this project are documented in the [CHANGELOG.md](CHANGEL
 
 ## License
 
-This project is licensed under the [MIT] - see the `LICENSE.md` file for details.
+This project is licensed under the [MIT] - see the `LICENSE` file for details.
