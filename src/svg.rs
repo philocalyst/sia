@@ -42,8 +42,8 @@ pub(crate) fn code_to_svg(
 
     // a semantic <g> for all text
     let mut g = Group::new()
-        .set("font-family", font.font.name().unwrap())
-        .set("font-size", font.font_size)
+        .set("font-family", font.glyphs.name().unwrap())
+        .set("font-size", font.size)
         .set("fill", fg_hex.clone());
 
     let mut max_width = 0;
@@ -108,7 +108,7 @@ pub(crate) fn code_to_svg(
         // Calculate the width for this line
         let width: f32 = segments
             .chars()
-            .map(|c| font.font.metrics(c, font.font_size).advance_width)
+            .map(|c| font.glyphs.metrics(c, font.size).advance_width)
             .sum();
         max_width = max_width.max(width as u32);
 

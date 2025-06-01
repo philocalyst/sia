@@ -39,9 +39,9 @@ lazy_static! {
 }
 
 struct FontConfig {
-    font: Font,
-    font_data: Vec<u8>,
-    font_size: f32,
+    glyphs: Font,
+    data: Vec<u8>,
+    size: f32,
 }
 
 #[derive(Clone, Debug)]
@@ -309,9 +309,9 @@ fn run() -> Result<(), Error> {
         available_themes.get(&cli.theme).unwrap(),
         &cli.input,
         &FontConfig {
-            font,
-            font_data: font_bytes,
-            font_size: cli.font_size,
+            glyphs: font,
+            data: font_bytes,
+            size: cli.font_size,
         },
         &Colors {
             background_alpha: cli.bg_alpha,
