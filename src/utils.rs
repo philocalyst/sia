@@ -4,8 +4,7 @@ use std::fs;
 
 pub fn get_canvas_height(num_lines: usize, font: &FontConfig) -> f32 {
     // Read into RUSTTYPE as fontdue sucks at height
-    let bytes = fs::read(font.font_path.clone()).unwrap();
-    let font_font = rusttype::Font::try_from_bytes(&bytes).unwrap();
+    let font_font = rusttype::Font::try_from_bytes(&font.font_data).unwrap();
 
     // Get vertical metrics & find individual line height
     let scale = Scale::uniform(font.font_size);
