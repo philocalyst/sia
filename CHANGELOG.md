@@ -6,6 +6,37 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [1.1.0] – 2025-06-01
+
+### Added
+- **Enhanced syntax highlighting support** via `two-face` crate integration
+  - Expanded theme support with additional built-in themes
+  - Improved syntax detection and highlighting capabilities
+- **System font integration** - fonts are now loaded by name from system fonts instead of requiring file paths
+  - Automatic font discovery from system font database
+  - Support for font family name matching
+  - Improved font loading reliability across different font sources
+- **Robust error handling** with `fs-err` crate for better file system error reporting
+
+### Changed
+- **Font configuration API** - simplified font specification:
+  - `--font` now accepts font names (e.g. "Arial") instead of file paths
+  - Font loading now uses system font database for better compatibility
+- **Internal font handling structure**:
+  - Renamed `FontConfig` fields: `font` → `glyphs`, `font_data` → `data`, `font_size` → `size`
+  - Font data is now extracted from system font database instead of direct file reading
+- **Dependency management**:
+  - Upgraded to `two-face` for enhanced syntax highlighting
+  - Integrated `fs-err` for improved error handling
+- **Documentation updates**:
+  - Updated README examples to use font names instead of file paths
+  - Corrected license file reference from `LICENSE.md` to `LICENSE`
+
+### Fixed
+- Font loading logic now properly handles various font source types (binary, file, shared)
+- Improved font metrics calculation using pre-loaded font data
+- Better font family name resolution and matching
+
 ## [1.0.0] – 2025-05-28
 
 ### Added
@@ -121,7 +152,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-[Unreleased]: https://github.com/philocalyst/sia/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/philocalyst/sia/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/philocalyst/sia/compare/v1.0.0...1.1.0  
 [1.0.0]: https://github.com/philocalyst/sia/compare/v0.2.0...v1.0.0  
 [0.2.0]: https://github.com/philocalyst/sia/compare/v1.1.0…v0.2.0  
 [0.1.0]: https://github.com/philocalyst/sia/compare/…v0.1.0 
