@@ -1,4 +1,5 @@
 use anyhow::Error;
+use anyhow::Result;
 use clap::Parser;
 use core::fmt;
 use file_format::FileFormat;
@@ -14,6 +15,7 @@ use thiserror::Error;
 use tiny_skia;
 use tiny_skia_path;
 use usvg;
+use usvg::fontdb::Source;
 
 mod svg;
 mod utils;
@@ -36,7 +38,7 @@ lazy_static! {
 
 struct FontConfig {
     font: Font,
-    font_path: PathBuf,
+    font_data: Vec<u8>,
     font_size: f32,
 }
 
@@ -257,10 +259,6 @@ fn run() -> Result<(), Error> {
     // Get the font database early to get available fonts
     let mut tree_options = usvg::Options::default();
     tree_options.fontdb_mut().load_system_fonts(); // System fonts should always be loaded? Maybe this is needless
-    let font_name = tree_options
-        .fontdb_mut()
-        .faces()
-        .any(|face| face.post_script_name.eq(&cli.font));
 
     // The font name should just be the final component
     let font_data = fs::read(&cli.font)?;
@@ -285,12 +283,25 @@ fn run() -> Result<(), Error> {
 
     let font_name = font.name().unwrap_or("Times New Roman").to_string();
 
-    let font_name = strip_font_modifier(&font_name);
-
     // Setup the rendering
     tree_options.dpi = 300.0;
     tree_options.font_family = font_name;
     tree_options.font_size = cli.font_size;
+
+    // Get the font_face
+    let font_face = tree_options
+        .fontdb_mut()
+        .faces()
+        .find(|face| face.post_script_name.eq(&cli.font))
+        .ok_or("Font not found")
+        .unwrap();
+
+    // Get the underlying font source data
+    let font_bytes = match &font_face.source {
+        Source::Binary(data) => data.as_ref().as_ref().to_vec(),
+        Source::File(path) => std::fs::read(path)?,
+        Source::SharedFile(_, data) => data.as_ref().as_ref().to_vec(),
+    };
 
     // Get our svg and final width/height measurements
     let svg = code_to_svg(
@@ -298,7 +309,7 @@ fn run() -> Result<(), Error> {
         &cli.input,
         &FontConfig {
             font,
-            font_path: cli.font,
+            font_data: font_bytes,
             font_size: cli.font_size,
         },
         &Colors {
