@@ -7,10 +7,10 @@ use svg::node::element::{
 };
 use svg::Document;
 use svg::Node;
-use syntect::easy::HighlightLines;
-use syntect::highlighting::{Style, Theme};
-use syntect::parsing::SyntaxSet;
-use syntect::util::LinesWithEndings;
+use two_face::re_exports::syntect::easy::HighlightLines;
+use two_face::re_exports::syntect::highlighting::{Style, Theme};
+use two_face::re_exports::syntect::parsing::SyntaxSet;
+use two_face::re_exports::syntect::util::LinesWithEndings;
 
 use crate::utils::get_canvas_height;
 use crate::{Colors, FontConfig, Input};
