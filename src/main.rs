@@ -15,6 +15,7 @@ use std::str::FromStr;
 use thiserror::Error;
 use tiny_skia;
 use tiny_skia_path;
+use two_face::theme::{extra, LazyThemeSet};
 use usvg;
 use usvg::fontdb::Source;
 
@@ -268,7 +269,7 @@ fn run() -> Result<(), Error> {
         .unwrap_or_else(|| PathBuf::from("output").with_extension("png"));
 
     // TODO: This only includes three themes, so I'm going to offer an option for users to load their own, just need to see how they're defined.
-    let availble_themes = syntect::highlighting::ThemeSet::load_defaults();
+    let available_themes: LazyThemeSet = LazyThemeSet::from(extra());
 
     let font_name = &cli.font;
 
@@ -292,7 +293,7 @@ fn run() -> Result<(), Error> {
         Source::SharedFile(_, data) => data.as_ref().as_ref().to_vec(),
     };
 
-    // The font name should just be the final component
+    // Assign data to a fontdue font
     let font = Font::from_bytes(
         font_bytes.clone(),
         fontdue::FontSettings {
@@ -301,11 +302,11 @@ fn run() -> Result<(), Error> {
             load_substitutions: true,
         },
     )
-    .unwrap();
+    .expect("We can assume that if the data came from a font already loaded, it's valid");
 
     // Get our svg and final width/height measurements
     let svg = code_to_svg(
-        availble_themes.themes.get(&cli.theme).unwrap(),
+        available_themes.get(&cli.theme).unwrap(),
         &cli.input,
         &FontConfig {
             font,
