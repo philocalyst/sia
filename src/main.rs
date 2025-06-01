@@ -210,9 +210,9 @@ pub fn parse_rgba8(s: &str) -> Result<rgb::RGBA8, String> {
 #[derive(Parser, Debug)]
 #[command(name = "sia", version = "0.2.0", about = "Generate a font preview")]
 struct Cli {
-    /// Input font file path
+    /// Input font name (must be loaded on the system)
     #[arg(short = 'F', long, env = "SIA_FONT")]
-    font_path: PathBuf,
+    font: String,
 
     /// Output (image?) file (default: output.png)
     #[arg(short = 'O', long, env = "SIA_OUT_FILE")]
@@ -257,10 +257,13 @@ fn run() -> Result<(), Error> {
     // Get the font database early to get available fonts
     let mut tree_options = usvg::Options::default();
     tree_options.fontdb_mut().load_system_fonts(); // System fonts should always be loaded? Maybe this is needless
-    tree_options.fontdb_mut().load_font_file(&cli.font_path)?;
+    let font_name = tree_options
+        .fontdb_mut()
+        .faces()
+        .any(|face| face.post_script_name.eq(&cli.font));
 
     // The font name should just be the final component
-    let font_data = fs::read(&cli.font_path)?;
+    let font_data = fs::read(&cli.font)?;
     let font = Font::from_bytes(
         font_data,
         fontdue::FontSettings {
@@ -295,7 +298,7 @@ fn run() -> Result<(), Error> {
         &cli.input,
         &FontConfig {
             font,
-            font_path: cli.font_path,
+            font_path: cli.font,
             font_size: cli.font_size,
         },
         &Colors {
